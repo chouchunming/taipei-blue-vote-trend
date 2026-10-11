@@ -3,8 +3,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from taipei_blue_vote.analysis import BLUE_CANDIDATES, ELECTION_YEARS
-from taipei_blue_vote.rebuild import PROXY_SPECS, rebuild_from_payloads
+from taipei_blue_vote.analysis import BLUE_CANDIDATES, ELECTION_YEARS, VillageResult
+from taipei_blue_vote.rebuild import (
+    PROXY_SPECS,
+    rebuild_age_from_payload,
+    rebuild_from_payloads,
+)
 
 
 class RebuildTests(unittest.TestCase):
@@ -46,6 +50,43 @@ class RebuildTests(unittest.TestCase):
             self.assertEqual(len(manifest["files"]), 7)
             self.assertTrue((root / "charts/taipei-blue-election-deltas.svg").exists())
 
+    def test_rebuild_age_from_payload_writes_joined_model_artifacts(self):
+        votes = []
+        population_rows = []
+        for district_index, (district, district_code) in enumerate(
+            (("信義區", "63000020"), ("大安區", "63000030"))
+        ):
+            for index in range(4):
+                village = f"測試{district_index}{index}里"
+                young = 180 + index * 20
+                senior = 200 + ((index + district_index) % 3) * 30
+                population_rows.append((district, district_code, village, young, senior))
+                blue_share = 0.2 + 0.5 * (young / 1000) + 0.8 * (senior / 1000) + district_index * 0.05
+                votes.append(
+                    VillageResult(
+                        2024,
+                        district,
+                        village,
+                        700,
+                        round(700 * blue_share),
+                        100,
+                    )
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rebuild_age_from_payload(
+                root,
+                votes,
+                _population_snapshot(population_rows),
+                source_url="file:///fixture.csv",
+            )
+
+            model = (root / "data/derived/age_model_2024.csv").read_text()
+            self.assertIn("young_share", model)
+            village = (root / "data/derived/village_age_structure_2024.csv").read_text()
+            self.assertEqual(len(village.splitlines()), 9)
+
 
 def _csv_payload(year):
     header = "屆期,鄉鎮市區,村里,候選人,得票數\n"
@@ -57,6 +98,40 @@ def _csv_payload(year):
     ]
     rows.append(f"{year},信義區,景新里,其他,30\n")
     return (header + "".join(rows)).encode()
+
+
+def _population_snapshot(specifications):
+    rows = []
+    for sequence, (district, code, village, young, senior) in enumerate(specifications, start=1):
+        ages = {
+            f"people_age_{age:03d}_{sex}": "0"
+            for age in range(100)
+            for sex in ("m", "f")
+        }
+        ages["people_age_020_m"] = str(young)
+        ages["people_age_040_m"] = str(1000 - young - senior)
+        ages["people_age_065_m"] = str(senior)
+        ages["people_age_100up_m"] = "0"
+        ages["people_age_100up_f"] = "0"
+        rows.append(
+            {
+                "statistic_yyymm": "11212",
+                "district_code": f"{code}{sequence:03d}",
+                "site_id": f"臺北市{district}",
+                "village": village,
+                "people_total": "1000",
+                **ages,
+            }
+        )
+    return json.dumps(
+        {
+            "responseCode": "OD-0101-S",
+            "totalPage": "1",
+            "page": "1",
+            "responseData": rows,
+        },
+        ensure_ascii=False,
+    ).encode()
 
 
 if __name__ == "__main__":

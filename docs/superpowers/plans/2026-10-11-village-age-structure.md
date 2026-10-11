@@ -4,9 +4,9 @@
 
 **Goal:** Add a tested December-2023 village population parser and weighted 2024 age-structure association model to the existing Taipei vote repository.
 
-**Architecture:** Decode and normalize the official population CSV into typed village rows, join exact keys to the already-validated 2024 election aggregates, and fit a dependency-free weighted least-squares model with district fixed effects. Keep population source provenance and derived outputs separate from the election manifest.
+**Architecture:** Decode and normalize the official household-registration API JSON into typed village rows, join exact keys to the already-validated 2024 election aggregates, and fit a dependency-free weighted least-squares model with district fixed effects. Keep population source provenance and derived outputs separate from the election manifest.
 
-**Tech Stack:** Python 3.11+ standard library, `csv`, typed dataclasses, small-matrix Gaussian elimination, `unittest`.
+**Tech Stack:** Python 3.11+ standard library, `json`, typed dataclasses, small-matrix Gaussian elimination, SVG, `unittest`.
 
 ## Global Constraints
 
@@ -25,30 +25,34 @@
 - Create: `tests/test_age_structure.py`
 
 **Interfaces:**
-- Consumes: CP950 CSV bytes and 2024 `VillageResult` rows.
+- Consumes: UTF-8 `ODRP014` API JSON bytes and 2024 `VillageResult` rows.
 - Produces: `PopulationRow` and `AgeObservation` records keyed by `(district, village)`.
 
-- [ ] **Step 1: Write failing tests for CP950 parsing, age bands, and exact-key joins**
+- [x] **Step 1: Write failing tests for API parsing, age bands, and exact-key joins**
 
 ```python
-population = parse_population_csv(payload, roc_year=112, month=12)
+population = parse_population_api_json(payload, expected_yyymm="11212")
 self.assertEqual(population[0].district, "信義區")
 self.assertEqual(population[0].age_20_39, 20)
 observations, coverage = join_age_and_votes(population, votes)
 self.assertEqual(coverage, (1, 1))
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run: `PYTHONPATH=src caffeinate -i -m python3 -m unittest tests.test_age_structure -v`
 
 Expected: import failure because `age_structure` does not exist.
 
-- [ ] **Step 3: Implement typed parsing and exact joins**
+- [x] **Step 3: Implement typed parsing and exact joins**
 
 ```python
 def age_sum(source, start, end):
-    return sum(int(source[f"{age}歲數量"]) for age in range(start, end + 1))
+    return sum(
+        int(source[f"people_age_{age:03d}_m"])
+        + int(source[f"people_age_{age:03d}_f"])
+        for age in range(start, end + 1)
+    )
 
 
 def population_share(count, total):
@@ -57,7 +61,7 @@ def population_share(count, total):
     return count / total
 ```
 
-- [ ] **Step 4: Run focused tests and verify GREEN**
+- [x] **Step 4: Run focused tests and verify GREEN**
 
 Run: `PYTHONPATH=src caffeinate -i -m python3 -m unittest tests.test_age_structure -v`
 
@@ -76,7 +80,7 @@ Expected: parser and join tests pass.
 - Consumes: matched `AgeObservation` rows.
 - Produces: coefficient rows, weighted R², village predictions and ranks.
 
-- [ ] **Step 1: Write failing tests for exact weighted least squares and model outputs**
+- [x] **Step 1: Write failing tests for exact weighted least squares and model outputs**
 
 ```python
 coefficients = weighted_least_squares(
@@ -88,13 +92,13 @@ self.assertAlmostEqual(coefficients[0], 1.0)
 self.assertAlmostEqual(coefficients[1], 2.0)
 ```
 
-- [ ] **Step 2: Run model tests and verify RED**
+- [x] **Step 2: Run model tests and verify RED**
 
 Run: `PYTHONPATH=src caffeinate -i -m python3 -m unittest tests.test_age_model -v`
 
 Expected: missing model functions.
 
-- [ ] **Step 3: Implement Gaussian elimination, district fixed effects, prediction, weighted R², and deterministic CSV output**
+- [x] **Step 3: Implement Gaussian elimination, district fixed effects, prediction, weighted R², deterministic CSV output, and SVG/HTML visualization**
 
 ```python
 xtwx = [[sum(w * x[i] * x[j] for x, w in zip(rows, weights)) for j in range(k)] for i in range(k)]
@@ -102,13 +106,13 @@ xtwy = [sum(w * x[i] * y for x, y, w in zip(rows, targets, weights)) for i in ra
 coefficients = solve_linear_system(xtwx, xtwy)
 ```
 
-- [ ] **Step 4: Rebuild from the official source and verify coverage and artifact content**
+- [x] **Step 4: Rebuild from the official source and verify coverage and artifact content**
 
 Run: `PYTHONPATH=src caffeinate -i -m python3 -m taipei_blue_vote --refresh`
 
 Expected: all 2024 election villages match December-2023 population records or unmatched keys are explicitly reported as a validation failure.
 
-- [ ] **Step 5: Run the complete suite, commit, merge, and push**
+- [x] **Step 5: Run the complete suite, commit, merge, and push**
 
 Run: `PYTHONPATH=src caffeinate -i -m python3 -m unittest discover -s tests -v`
 

@@ -1,0 +1,11 @@
+{
+  "bytes": 9976575,
+  "dataset_page_url": "https://data.gov.tw/dataset/77132",
+  "encoding": "utf-8",
+  "resource": "村里戶數、單一年齡人口（新增區域代碼） API",
+  "roc_yyymm": "11212",
+  "scope": "API page 1; filtered to 臺北市 rows",
+  "sha256": "0befa5c761c7a800faf9d7975ce005cffc01e942dca8b00fd66473fa7de89df5",
+  "snapshot": "2023-12",
+  "source_url": "https://www.ris.gov.tw/rs-opendata/api/v1/datastore/ODRP014/11212?page=1"
+}

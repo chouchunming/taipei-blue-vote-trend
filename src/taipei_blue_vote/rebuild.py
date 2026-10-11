@@ -6,9 +6,10 @@ import json
 from pathlib import Path
 from typing import Iterable, Mapping
 
-from .analysis import VoteRow
-from .artifacts import write_artifacts
-from .pipeline import analyze_rows, proxy_results
+from .age_structure import fit_age_model, join_age_and_votes, parse_population_api_json
+from .analysis import VillageResult, VoteRow
+from .artifacts import write_age_artifacts, write_artifacts
+from .pipeline import AnalysisBundle, analyze_rows, proxy_results
 from .sources import (
     INDEX_URL,
     cached_payload,
@@ -28,6 +29,13 @@ PROXY_SPECS = (
     ("煥民新村所在地", "大安區", "學府里", 2004),
 )
 
+POPULATION_DATASET_URL = "https://data.gov.tw/dataset/77132"
+POPULATION_SNAPSHOT_YYYMM = "11212"
+POPULATION_API_URL = (
+    "https://www.ris.gov.tw/rs-opendata/api/v1/datastore/ODRP014/"
+    f"{POPULATION_SNAPSHOT_YYYMM}?page=1"
+)
+
 
 def rebuild(root: Path, *, refresh: bool = False) -> None:
     raw = root / "data" / "raw"
@@ -45,7 +53,19 @@ def rebuild(root: Path, *, refresh: bool = False) -> None:
         )
         for year, filename in filenames.items()
     }
-    rebuild_from_payloads(root, index_payload, filenames, payloads)
+    analysis = rebuild_from_payloads(root, index_payload, filenames, payloads)
+    population_payload = cached_payload(
+        POPULATION_API_URL,
+        raw / "ris-village-single-age-population-11212-page1.json",
+        refresh=refresh,
+        timeout=90.0,
+    )
+    rebuild_age_from_payload(
+        root,
+        analysis.villages,
+        population_payload,
+        source_url=POPULATION_API_URL,
+    )
 
 
 def rebuild_from_payloads(
@@ -56,7 +76,7 @@ def rebuild_from_payloads(
     *,
     expected_city_totals: Mapping[int, tuple[int, int]] = EXPECTED_CITY_TOTALS,
     proxy_specs: Iterable[tuple[str, str, str, int]] = PROXY_SPECS,
-) -> None:
+) -> AnalysisBundle:
     rows: list[VoteRow] = []
     file_records = []
     for year, filename in sorted(filenames.items()):
@@ -99,3 +119,36 @@ def rebuild_from_payloads(
         "source_version": index.get("sourceVersion"),
     }
     write_artifacts(root, analysis, proxies, manifest)
+    return analysis
+
+
+def rebuild_age_from_payload(
+    root: Path,
+    votes: Iterable[VillageResult],
+    population_payload: bytes,
+    *,
+    source_url: str,
+) -> None:
+    population = parse_population_api_json(
+        population_payload,
+        expected_yyymm=POPULATION_SNAPSHOT_YYYMM,
+    )
+    observations, coverage = join_age_and_votes(population, votes)
+    if coverage[0] != coverage[1]:
+        vote_keys = {(row.district, row.village) for row in votes if row.year == 2024}
+        population_keys = {(row.district, row.village) for row in population}
+        missing = sorted(vote_keys - population_keys)
+        raise ValueError(f"population join did not cover every 2024 vote village: {missing}")
+    model = fit_age_model(observations)
+    manifest = {
+        "bytes": len(population_payload),
+        "dataset_page_url": POPULATION_DATASET_URL,
+        "encoding": "utf-8",
+        "resource": "村里戶數、單一年齡人口（新增區域代碼） API",
+        "roc_yyymm": POPULATION_SNAPSHOT_YYYMM,
+        "sha256": sha256_hex(population_payload),
+        "snapshot": "2023-12",
+        "scope": "API page 1; filtered to 臺北市 rows",
+        "source_url": source_url,
+    }
+    write_age_artifacts(root, model, coverage=coverage, source_manifest=manifest)

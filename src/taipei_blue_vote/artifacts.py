@@ -5,8 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from .age_structure import AgeModel
 from .analysis import estimate_young_votes
-from .chart import render_html, render_svg
+from .chart import render_age_model_svg, render_html, render_svg
 from .outputs import write_csv, write_json
 from .pipeline import AnalysisBundle, ProxyResult
 
@@ -165,3 +166,97 @@ def _offsets(estimates: Sequence[int], city_loss: int) -> tuple[str, str, str]:
     if city_loss <= 0:
         return ("", "", "")
     return tuple(f"{estimate / city_loss:.4f}" for estimate in estimates)
+
+
+def write_age_artifacts(
+    root: Path,
+    model: AgeModel,
+    *,
+    coverage: tuple[int, int],
+    source_manifest: Mapping[str, object],
+) -> None:
+    """Write village predictions, model coefficients, and population provenance."""
+    derived = root / "data" / "derived"
+    write_csv(
+        derived / "village_age_structure_2024.csv",
+        [
+            "district",
+            "village",
+            "population",
+            "age_20_39_share",
+            "age_40_64_share",
+            "age_65_plus_share",
+            "age_75_plus_share",
+            "valid_votes",
+            "blue_votes",
+            "actual_blue_share",
+            "predicted_blue_votes",
+            "predicted_blue_share",
+            "vote_residual",
+            "residual_percentage_points",
+            "actual_rank",
+            "predicted_rank",
+        ],
+        [
+            [
+                prediction.observation.district,
+                prediction.observation.village,
+                prediction.observation.population,
+                f"{prediction.observation.young_share * 100:.4f}",
+                f"{prediction.observation.middle_share * 100:.4f}",
+                f"{prediction.observation.senior_share * 100:.4f}",
+                f"{prediction.observation.age_75_plus_share * 100:.4f}",
+                prediction.observation.valid_votes,
+                prediction.observation.blue_votes,
+                f"{prediction.observation.blue_share * 100:.4f}",
+                round(prediction.predicted_blue_share * prediction.observation.valid_votes),
+                f"{prediction.predicted_blue_share * 100:.4f}",
+                prediction.observation.blue_votes
+                - round(prediction.predicted_blue_share * prediction.observation.valid_votes),
+                f"{prediction.residual * 100:.4f}",
+                prediction.actual_rank,
+                prediction.predicted_rank,
+            ]
+            for prediction in model.predictions
+        ],
+    )
+
+    matched, total = coverage
+    write_csv(
+        derived / "age_model_2024.csv",
+        [
+            "term",
+            "coefficient",
+            "effect_for_10pp",
+            "weighted_r2",
+            "baseline_district",
+            "observation_count",
+            "matched_vote_villages",
+            "total_vote_villages",
+            "match_rate",
+        ],
+        [
+            [
+                coefficient.name,
+                f"{coefficient.coefficient:.6f}",
+                "" if coefficient.effect_for_10pp is None else f"{coefficient.effect_for_10pp:.4f}",
+                f"{model.weighted_r2:.6f}",
+                model.baseline_district,
+                len(model.predictions),
+                matched,
+                total,
+                f"{matched / total:.6f}",
+            ]
+            for coefficient in model.coefficients
+        ],
+    )
+    write_json(derived / "age_source_manifest.json", source_manifest)
+
+    charts = root / "charts"
+    charts.mkdir(parents=True, exist_ok=True)
+    svg = render_age_model_svg(model)
+    (charts / "village-age-model-2024.svg").write_text(svg, encoding="utf-8")
+    (charts / "village-age-model-2024.html").write_text(
+        render_html(svg, title="臺北市 2024 里級年齡結構模型"),
+        encoding="utf-8",
+    )
