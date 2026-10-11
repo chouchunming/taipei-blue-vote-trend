@@ -28,7 +28,6 @@ def write_artifacts(
     charts = root / "charts"
     baseline_city = analysis.city[0]
     baseline_cohort = analysis.cohort[0]
-    baseline_green_cohort = analysis.green_cohort[0]
 
     write_csv(
         derived / "city_trend.csv",
@@ -73,6 +72,22 @@ def write_artifacts(
         ],
     )
 
+    green_cohort_rows: list[list[object]] = []
+    if analysis.green_cohort:
+        baseline_green_cohort = analysis.green_cohort[0]
+        green_cohort_rows = [
+            [
+                row.year,
+                len(analysis.green_cohort_keys),
+                row.valid_votes,
+                row.green_votes,
+                f"{row.green_share:.4f}",
+                row.green_votes - baseline_green_cohort.green_votes,
+                f"{row.green_share - baseline_green_cohort.green_share:.4f}",
+            ]
+            for row in analysis.green_cohort
+        ]
+
     write_csv(
         derived / "deep_green_cohort.csv",
         [
@@ -84,18 +99,7 @@ def write_artifacts(
             "green_vote_change_from_2000",
             "share_point_change_from_2000",
         ],
-        [
-            [
-                row.year,
-                len(analysis.green_cohort_keys),
-                row.valid_votes,
-                row.green_votes,
-                f"{row.green_share:.4f}",
-                row.green_votes - baseline_green_cohort.green_votes,
-                f"{row.green_share - baseline_green_cohort.green_share:.4f}",
-            ]
-            for row in analysis.green_cohort
-        ],
+        green_cohort_rows,
     )
 
     write_csv(

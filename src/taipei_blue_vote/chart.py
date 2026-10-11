@@ -177,7 +177,7 @@ def render_bloc_svg(
 
     volatility_left, volatility_top = 110.0, 470.0
     volatility_width, volatility_height = 980.0, 145.0
-    volatility_max = max(row[1] for row in volatility_rows) * 1.12
+    volatility_max = max(1.0, max(row[1] for row in volatility_rows) * 1.12)
     bar_slot = volatility_width / len(volatility_rows)
     bar_width = min(90.0, bar_slot * 0.56)
     bars = []

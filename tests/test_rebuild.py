@@ -54,6 +54,12 @@ class RebuildTests(unittest.TestCase):
             self.assertEqual(manifest["build_id"], "fixture")
             self.assertEqual(len(manifest["files"]), 7)
             self.assertTrue((root / "charts/taipei-blue-election-deltas.svg").exists())
+            green_cohort = (root / "data/derived/deep_green_cohort.csv").read_text()
+            self.assertEqual(
+                green_cohort,
+                "year,village_count,valid_votes,green_votes,green_share,"
+                "green_vote_change_from_2000,share_point_change_from_2000\n",
+            )
 
     def test_rebuild_age_from_payload_writes_joined_model_artifacts(self):
         votes = []

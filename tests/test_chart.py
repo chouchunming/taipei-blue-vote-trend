@@ -87,6 +87,14 @@ class ChartTests(unittest.TestCase):
         self.assertEqual(svg.count('class="volatility-bar"'), 6)
         self.assertIn('role="img"', svg)
 
+    def test_bloc_svg_handles_an_all_zero_volatility_series(self):
+        blocs = [(2000, 70.0, 30.0, 0.0), (2004, 70.0, 30.0, 0.0)]
+
+        svg = chart_module.render_bloc_svg(blocs, [(2004, 0.0, 0)])
+
+        self.assertIn("0.00 pp", svg)
+        self.assertEqual(svg.count('class="volatility-bar"'), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
