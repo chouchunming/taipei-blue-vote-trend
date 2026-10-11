@@ -156,6 +156,15 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 - 市長與總統選舉受候選人、職位、投票率與競選脈絡影響，不能把兩條時間序列當成同一種選舉。
 - 兩次 TVBS 民調是獨立橫斷面市話樣本；回憶投票子群不是固定追蹤樣本，公布的全體抽樣誤差也不等於子群誤差。
 
-## License
+## 授權與取用
 
-程式碼採 MIT License。資料仍依各原始提供者的授權與註明方式使用。
+本專案的原創內容，包括程式碼、研究報告、圖表，以及 `data/derived/`
+內由本專案產生的衍生分析資料，均採 [MIT License](LICENSE)。歡迎自由取用、
+修改與再散布；使用時請保留 MIT 授權聲明，也歡迎註明本專案網址，方便讀者
+追溯方法與版本。
+
+MIT 授權不延伸至中選會、戶政司、民調機構或其他第三方的上游原始資料與
+文件；這些內容仍依各原始提供者的授權與使用條款辦理。來源、版本與
+SHA-256 見 `data/derived/` 內各 source manifest；上游授權則記錄於 manifest
+或其連結的官方資料集頁面。衍生資料的授權與引用說明見
+[`data/derived/README.md`](data/derived/README.md)。
