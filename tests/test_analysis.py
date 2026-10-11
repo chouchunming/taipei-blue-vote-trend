@@ -1,7 +1,9 @@
 import unittest
 
+import taipei_blue_vote.analysis as analysis_module
 from taipei_blue_vote.analysis import (
     ELECTION_YEARS,
+    ElectionResult,
     VoteRow,
     aggregate_villages,
     election_deltas,
@@ -12,7 +14,7 @@ from taipei_blue_vote.analysis import (
 
 
 class AnalysisTests(unittest.TestCase):
-    def test_aggregate_villages_counts_only_configured_blue_candidates(self):
+    def test_aggregate_villages_counts_blue_green_and_other(self):
         rows = [
             VoteRow(2024, "信義區", "景新里", "侯友宜", 40),
             VoteRow(2024, "信義區", "景新里", "柯文哲", 30),
@@ -23,8 +25,19 @@ class AnalysisTests(unittest.TestCase):
 
         self.assertEqual(result.valid_votes, 100)
         self.assertEqual(result.blue_votes, 40)
+        self.assertEqual(result.green_votes, 30)
+        self.assertEqual(result.other_votes, 30)
         self.assertEqual(result.ko_votes, 30)
         self.assertEqual(result.blue_share, 40.0)
+        self.assertEqual(result.green_share, 30.0)
+        self.assertEqual(result.other_share, 30.0)
+
+    def test_bloc_configuration_rejects_overlap(self):
+        blue = {year: frozenset({"same"}) for year in ELECTION_YEARS}
+        green = {year: frozenset({"same"}) for year in ELECTION_YEARS}
+
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            analysis_module.validate_bloc_configuration(blue, green)
 
     def test_aggregate_villages_rejects_negative_votes(self):
         rows = [VoteRow(2024, "信義區", "景新里", "侯友宜", -1)]
@@ -53,6 +66,47 @@ class AnalysisTests(unittest.TestCase):
         cohort = select_fixed_cohort(aggregate_villages(rows), threshold=65.0, minimum_valid=100)
 
         self.assertEqual(cohort, frozenset({("甲區", "甲里")}))
+
+    def test_fixed_green_cohort_uses_green_share(self):
+        rows = []
+        for year in ELECTION_YEARS:
+            rows.extend(
+                [
+                    VoteRow(year, "甲區", "綠里", _blue_candidate(year), 55),
+                    VoteRow(year, "甲區", "綠里", _green_candidate(year), 45),
+                    VoteRow(year, "甲區", "非綠里", _blue_candidate(year), 56),
+                    VoteRow(year, "甲區", "非綠里", _green_candidate(year), 44),
+                ]
+            )
+
+        cohort = select_fixed_cohort(
+            aggregate_villages(rows),
+            threshold=45.0,
+            minimum_valid=100,
+            bloc="green",
+        )
+
+        self.assertEqual(cohort, frozenset({("甲區", "綠里")}))
+
+    def test_bloc_deltas_and_volatility_measure_three_category_change(self):
+        city = [
+            ElectionResult(2000, 1000, 600, 0, 350, 50),
+            ElectionResult(2004, 1000, 500, 0, 400, 100),
+        ]
+
+        delta = analysis_module.bloc_deltas(city)[0]
+        volatility = analysis_module.electoral_volatility(city)[0]
+
+        self.assertEqual(
+            (
+                delta.blue_share_delta,
+                delta.green_share_delta,
+                delta.other_share_delta,
+            ),
+            (-10.0, 5.0, 5.0),
+        )
+        self.assertEqual(volatility.volatility_pp, 10.0)
+        self.assertEqual(volatility.vote_equivalent, 100)
 
     def test_summarize_aggregates_selected_villages(self):
         rows = [
@@ -88,6 +142,18 @@ def _blue_candidate(year):
         2016: "朱立倫",
         2020: "韓國瑜",
         2024: "侯友宜",
+    }[year]
+
+
+def _green_candidate(year):
+    return {
+        2000: "陳水扁",
+        2004: "陳水扁",
+        2008: "謝長廷",
+        2012: "蔡英文",
+        2016: "蔡英文",
+        2020: "蔡英文",
+        2024: "賴清德",
     }[year]
 
 
