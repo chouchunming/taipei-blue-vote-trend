@@ -28,6 +28,7 @@ def write_artifacts(
     charts = root / "charts"
     baseline_city = analysis.city[0]
     baseline_cohort = analysis.cohort[0]
+    baseline_green_cohort = analysis.green_cohort[0]
 
     write_csv(
         derived / "city_trend.csv",
@@ -36,10 +37,18 @@ def write_artifacts(
             "valid_votes",
             "blue_votes",
             "blue_share",
+            "green_votes",
+            "green_share",
+            "other_votes",
+            "other_share",
             "ko_votes",
             "ko_share",
             "blue_vote_change_from_2000",
-            "share_point_change_from_2000",
+            "blue_share_point_change_from_2000",
+            "green_vote_change_from_2000",
+            "green_share_point_change_from_2000",
+            "other_vote_change_from_2000",
+            "other_share_point_change_from_2000",
         ],
         [
             [
@@ -47,12 +56,45 @@ def write_artifacts(
                 row.valid_votes,
                 row.blue_votes,
                 f"{row.blue_share:.4f}",
+                row.green_votes,
+                f"{row.green_share:.4f}",
+                row.other_votes,
+                f"{row.other_share:.4f}",
                 row.ko_votes,
                 f"{row.ko_votes / row.valid_votes * 100:.4f}",
                 row.blue_votes - baseline_city.blue_votes,
                 f"{row.blue_share - baseline_city.blue_share:.4f}",
+                row.green_votes - baseline_city.green_votes,
+                f"{row.green_share - baseline_city.green_share:.4f}",
+                row.other_votes - baseline_city.other_votes,
+                f"{row.other_share - baseline_city.other_share:.4f}",
             ]
             for row in analysis.city
+        ],
+    )
+
+    write_csv(
+        derived / "deep_green_cohort.csv",
+        [
+            "year",
+            "village_count",
+            "valid_votes",
+            "green_votes",
+            "green_share",
+            "green_vote_change_from_2000",
+            "share_point_change_from_2000",
+        ],
+        [
+            [
+                row.year,
+                len(analysis.green_cohort_keys),
+                row.valid_votes,
+                row.green_votes,
+                f"{row.green_share:.4f}",
+                row.green_votes - baseline_green_cohort.green_votes,
+                f"{row.green_share - baseline_green_cohort.green_share:.4f}",
+            ]
+            for row in analysis.green_cohort
         ],
     )
 
@@ -85,6 +127,46 @@ def write_artifacts(
         derived / "election_deltas.csv",
         ["year", "share_point_delta", "blue_vote_delta"],
         [[year, f"{share_delta:.2f}", vote_delta] for year, share_delta, vote_delta in analysis.deltas],
+    )
+
+    write_csv(
+        derived / "bloc_deltas.csv",
+        [
+            "year",
+            "blue_share_point_delta",
+            "blue_vote_delta",
+            "green_share_point_delta",
+            "green_vote_delta",
+            "other_share_point_delta",
+            "other_vote_delta",
+        ],
+        [
+            [
+                row.year,
+                f"{row.blue_share_delta:.2f}",
+                row.blue_vote_delta,
+                f"{row.green_share_delta:.2f}",
+                row.green_vote_delta,
+                f"{row.other_share_delta:.2f}",
+                row.other_vote_delta,
+            ]
+            for row in analysis.bloc_deltas
+        ],
+    )
+
+    valid_by_year = {row.year: row.valid_votes for row in analysis.city}
+    write_csv(
+        derived / "electoral_volatility.csv",
+        ["year", "volatility_pp", "vote_equivalent", "valid_votes"],
+        [
+            [
+                row.year,
+                f"{row.volatility_pp:.4f}",
+                row.vote_equivalent,
+                valid_by_year[row.year],
+            ]
+            for row in analysis.volatility
+        ],
     )
 
     write_csv(
