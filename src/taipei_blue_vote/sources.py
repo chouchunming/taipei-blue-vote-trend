@@ -6,6 +6,7 @@ import csv
 import hashlib
 import io
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -18,6 +19,18 @@ CSV_BASE_URL = "https://taiwanvotes.tw/data/csv/"
 USER_AGENT = "taipei-blue-vote-trend/1.0 (+https://github.com/chouchunming/taipei-blue-vote-trend)"
 
 REQUIRED_COLUMNS = frozenset({"屆期", "鄉鎮市區", "村里", "候選人", "得票數"})
+MAYOR_REQUIRED_COLUMNS = REQUIRED_COLUMNS | {"政黨"}
+MAYOR_YEARS = (2002, 2006, 2010, 2014, 2018, 2022)
+
+
+@dataclass(frozen=True, slots=True)
+class MayorVoteRow:
+    year: int
+    district: str
+    village: str
+    candidate: str
+    party: str
+    votes: int
 
 
 def parse_vote_csv(payload: bytes) -> tuple[VoteRow, ...]:
@@ -45,6 +58,32 @@ def parse_vote_csv(payload: bytes) -> tuple[VoteRow, ...]:
     return tuple(rows)
 
 
+def parse_mayor_vote_csv(payload: bytes) -> tuple[MayorVoteRow, ...]:
+    """Parse one normalized TaiwanVotes mayor CSV."""
+    reader = csv.DictReader(io.StringIO(payload.decode("utf-8-sig")))
+    columns = set(reader.fieldnames or ())
+    missing = sorted(MAYOR_REQUIRED_COLUMNS - columns)
+    if missing:
+        raise ValueError(f"missing CSV columns: {', '.join(missing)}")
+
+    rows = []
+    for source in reader:
+        try:
+            rows.append(
+                MayorVoteRow(
+                    year=int(source["屆期"]),
+                    district=source["鄉鎮市區"].strip(),
+                    village=source["村里"].strip(),
+                    candidate=source["候選人"].strip(),
+                    party=source["政黨"].strip(),
+                    votes=int(source["得票數"]),
+                )
+            )
+        except (AttributeError, TypeError, ValueError) as error:
+            raise ValueError(f"invalid mayor vote row: {source}") from error
+    return tuple(rows)
+
+
 def select_taipei_presidential_files(index_payload: bytes) -> dict[int, str]:
     """Return the single Taipei presidential CSV filename for each target year."""
     index = json.loads(index_payload.decode("utf-8-sig"))
@@ -64,6 +103,28 @@ def select_taipei_presidential_files(index_payload: bytes) -> dict[int, str]:
     missing = [year for year in ELECTION_YEARS if year not in selected]
     if missing:
         raise ValueError(f"missing Taipei presidential files for: {missing}")
+    return dict(sorted(selected.items()))
+
+
+def select_taipei_mayor_files(index_payload: bytes) -> dict[int, str]:
+    """Return the single Taipei mayor CSV filename for each target year."""
+    index = json.loads(index_payload.decode("utf-8-sig"))
+    selected: dict[int, str] = {}
+    for item in index.get("files", []):
+        if (
+            item.get("kind") == "votes"
+            and item.get("type") == "縣市長"
+            and item.get("county") == "臺北市"
+            and item.get("year") in MAYOR_YEARS
+        ):
+            year = int(item["year"])
+            if year in selected:
+                raise ValueError(f"multiple Taipei mayor files for {year}")
+            selected[year] = str(item["file"])
+
+    missing = [year for year in MAYOR_YEARS if year not in selected]
+    if missing:
+        raise ValueError(f"missing Taipei mayor files for: {missing}")
     return dict(sorted(selected.items()))
 
 
