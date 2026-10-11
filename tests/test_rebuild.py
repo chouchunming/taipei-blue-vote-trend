@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from taipei_blue_vote.analysis import (
     BLUE_CANDIDATES,
@@ -13,8 +14,10 @@ from taipei_blue_vote.mayor import COALITION_BLUE, COALITION_GREEN
 from taipei_blue_vote.rebuild import (
     PROXY_SPECS,
     prepare_mayor_from_payloads,
+    rebuild,
     rebuild_age_from_payload,
     rebuild_from_payloads,
+    rebuild_mayor_from_payloads,
 )
 from taipei_blue_vote.sources import MAYOR_YEARS, sha256_hex
 
@@ -174,6 +177,109 @@ class RebuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, filenames[2014]):
             prepare_mayor_from_payloads(b"{}", filenames, payloads)
 
+    def test_rebuild_mayor_from_payloads_writes_all_mayor_tables(self):
+        filenames = {year: f"縣市長_{year}_臺北市.csv" for year in MAYOR_YEARS}
+        index_payload = json.dumps(
+            {
+                "schemaVersion": 3,
+                "buildId": "mayor-fixture",
+                "files": [
+                    {
+                        "kind": "votes",
+                        "type": "縣市長",
+                        "year": year,
+                        "county": "臺北市",
+                        "file": filename,
+                    }
+                    for year, filename in filenames.items()
+                ],
+            },
+            ensure_ascii=False,
+        ).encode()
+        payloads = {year: _mayor_csv_payload(year) for year in MAYOR_YEARS}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            analysis = rebuild_mayor_from_payloads(
+                root,
+                index_payload,
+                filenames,
+                payloads,
+                expected_city_totals=_fixture_mayor_totals(),
+            )
+
+            self.assertEqual(
+                tuple(scenario.classification for scenario in analysis.scenarios),
+                ("coalition", "official_nomination"),
+            )
+            derived = root / "data/derived"
+            self.assertTrue((derived / "mayor_candidate_totals.csv").exists())
+            self.assertTrue((derived / "mayor_city_trend.csv").exists())
+            manifest = json.loads(
+                (derived / "mayor_source_manifest.json").read_text()
+            )
+            self.assertEqual(manifest["build_id"], "mayor-fixture")
+
+    def test_full_rebuild_downloads_mayor_files_from_shared_index(self):
+        presidential = {
+            year: f"總統_{year}_臺北市.csv" for year in ELECTION_YEARS
+        }
+        mayor = {year: f"縣市長_{year}_臺北市.csv" for year in MAYOR_YEARS}
+        index_payload = json.dumps(
+            {
+                "files": [
+                    *(
+                        {
+                            "kind": "votes",
+                            "type": "總統",
+                            "year": year,
+                            "county": "臺北市",
+                            "file": filename,
+                        }
+                        for year, filename in presidential.items()
+                    ),
+                    *(
+                        {
+                            "kind": "votes",
+                            "type": "縣市長",
+                            "year": year,
+                            "county": "臺北市",
+                            "file": filename,
+                        }
+                        for year, filename in mayor.items()
+                    ),
+                ]
+            },
+            ensure_ascii=False,
+        ).encode()
+
+        def cached_fixture(_url, path, **_kwargs):
+            if path.name == "index.json":
+                return index_payload
+            if path.name == "ris-village-single-age-population-11212-page1.json":
+                return b"population"
+            return path.name.encode()
+
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "taipei_blue_vote.rebuild.cached_payload", side_effect=cached_fixture
+        ), patch(
+            "taipei_blue_vote.rebuild.rebuild_from_payloads"
+        ) as presidential_rebuild, patch(
+            "taipei_blue_vote.rebuild.rebuild_mayor_from_payloads"
+        ) as mayor_rebuild, patch(
+            "taipei_blue_vote.rebuild.rebuild_age_from_payload"
+        ):
+            presidential_rebuild.return_value.villages = ()
+            root = Path(directory)
+            rebuild(root, refresh=True)
+
+            mayor_rebuild.assert_called_once_with(
+                root,
+                index_payload,
+                mayor,
+                {year: filename.encode() for year, filename in mayor.items()},
+            )
+
 
 def _csv_payload(year):
     header = "屆期,鄉鎮市區,村里,候選人,得票數\n"
@@ -197,6 +303,28 @@ def _mayor_csv_payload(year, *, internal_year=None):
         for number, candidate in enumerate(candidates, start=1)
     ]
     return (header + "".join(rows)).encode()
+
+
+def _fixture_mayor_totals():
+    return {
+        "coalition": {
+            year: (
+                len(COALITION_BLUE[year] | COALITION_GREEN[year]),
+                len(COALITION_BLUE[year]),
+                len(COALITION_GREEN[year]),
+                0,
+            )
+            for year in MAYOR_YEARS
+        },
+        "official_nomination": {
+            2002: (2, 1, 1, 0),
+            2006: (4, 1, 1, 2),
+            2010: (2, 1, 1, 0),
+            2014: (2, 1, 0, 1),
+            2018: (2, 1, 1, 0),
+            2022: (2, 1, 1, 0),
+        },
+    }
 
 
 def _population_snapshot(specifications):

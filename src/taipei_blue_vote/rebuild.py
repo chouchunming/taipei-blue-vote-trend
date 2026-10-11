@@ -10,6 +10,7 @@ from .age_structure import fit_age_model, join_age_and_votes, parse_population_a
 from .analysis import VillageResult, VoteRow
 from .artifacts import write_age_artifacts, write_artifacts
 from .mayor import MayorAnalysisBundle, analyze_mayor_rows
+from .mayor_artifacts import write_mayor_artifacts
 from .pipeline import AnalysisBundle, analyze_rows, proxy_results
 from .sources import (
     INDEX_URL,
@@ -17,6 +18,7 @@ from .sources import (
     csv_url,
     parse_mayor_vote_csv,
     parse_vote_csv,
+    select_taipei_mayor_files,
     select_taipei_presidential_files,
     sha256_hex,
 )
@@ -63,6 +65,21 @@ def rebuild(root: Path, *, refresh: bool = False) -> None:
         for year, filename in filenames.items()
     }
     analysis = rebuild_from_payloads(root, index_payload, filenames, payloads)
+    mayor_filenames = select_taipei_mayor_files(index_payload)
+    mayor_payloads = {
+        year: cached_payload(
+            csv_url(filename),
+            raw / filename,
+            refresh=refresh,
+        )
+        for year, filename in mayor_filenames.items()
+    }
+    rebuild_mayor_from_payloads(
+        root,
+        index_payload,
+        mayor_filenames,
+        mayor_payloads,
+    )
     population_payload = cached_payload(
         POPULATION_API_URL,
         raw / "ris-village-single-age-population-11212-page1.json",
@@ -179,6 +196,25 @@ def prepare_mayor_from_payloads(
         "source_version": index.get("sourceVersion"),
     }
     return analysis, manifest
+
+
+def rebuild_mayor_from_payloads(
+    root: Path,
+    index_payload: bytes,
+    filenames: Mapping[int, str],
+    payloads: Mapping[int, bytes],
+    *,
+    expected_city_totals=EXPECTED_MAYOR_CITY_TOTALS,
+) -> MayorAnalysisBundle:
+    """Validate in-memory mayor payloads and write their derived tables."""
+    analysis, manifest = prepare_mayor_from_payloads(
+        index_payload,
+        filenames,
+        payloads,
+        expected_city_totals=expected_city_totals,
+    )
+    write_mayor_artifacts(root, analysis, manifest)
+    return analysis
 
 
 def rebuild_age_from_payload(
