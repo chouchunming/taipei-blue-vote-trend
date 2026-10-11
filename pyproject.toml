@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taipei-blue-vote-trend"
+version = "0.1.0"
+description = "Reproducible Taipei presidential-vote trend analysis, 2000–2024"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Vincent Chou"}]
+dependencies = []
+
+[project.scripts]
+taipei-blue-vote = "taipei_blue_vote.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

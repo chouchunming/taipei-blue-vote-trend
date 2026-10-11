@@ -1,0 +1,81 @@
+{
+  "build_id": "20260914103616",
+  "compilation_attribution": "視覺化速查選舉資料庫（taiwanvotes.tw）",
+  "compilation_license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "dataset": "TaiwanVotes normalized CEC election CSV",
+  "files": [
+    {
+      "bytes": 261809,
+      "filename": "總統_2000_臺北市.csv",
+      "rows": 2175,
+      "sha256": "510cd01034ffcf50edfafbb449b51be17b143334cca43615aa2712a0e2e04aab",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2000_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2000
+    },
+    {
+      "bytes": 113785,
+      "filename": "總統_2004_臺北市.csv",
+      "rows": 896,
+      "sha256": "b895b161401c1ff40e9a254851ce50fe22f1cdd4ad9fab2a04078a2255669ee1",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2004_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2004
+    },
+    {
+      "bytes": 115351,
+      "filename": "總統_2008_臺北市.csv",
+      "rows": 898,
+      "sha256": "4298c86ab6800053a304d38eb17363e3b4f393b544b47c40a4c4473f67252410",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2008_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2008
+    },
+    {
+      "bytes": 181626,
+      "filename": "總統_2012_臺北市.csv",
+      "rows": 1368,
+      "sha256": "f59975e853957b78007e415ffa24cd707969589ec4826489c8e038215852c4c0",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2012_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2012
+    },
+    {
+      "bytes": 172241,
+      "filename": "總統_2016_臺北市.csv",
+      "rows": 1368,
+      "sha256": "198d63af76ee056b946605dd10dbdb24c2f86383fbf0fe8cbe9c9b3b4efef40a",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2016_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2016
+    },
+    {
+      "bytes": 172267,
+      "filename": "總統_2020_臺北市.csv",
+      "rows": 1368,
+      "sha256": "ac39185aea2ca30478a19205bf0b04564946ec7528bd308b64342c30cdedc2fd",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2020_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2020
+    },
+    {
+      "bytes": 175051,
+      "filename": "總統_2024_臺北市.csv",
+      "rows": 1368,
+      "sha256": "834c8446bf3c98ad2c32ddf5957b089f8b975c7012582a8bd644047782191541",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%BD%E7%B5%B1_2024_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2024
+    }
+  ],
+  "index_sha256": "2013e3e160c56b25cf98dfe71175b9531b812b6e2f67c9d3ed9dbf0649740154",
+  "index_url": "https://taiwanvotes.tw/data/csv/index.json",
+  "schema_version": 3,
+  "source_license": {
+    "dataset": "https://data.gov.tw/dataset/13119",
+    "license": "政府資料開放授權條款－第1版",
+    "licenseUrl": "https://data.gov.tw/license",
+    "name": "選舉資料庫（含選舉區資料）",
+    "provider": "中央選舉委員會"
+  },
+  "source_modified": "2026-01-26T06:54:52Z",
+  "source_retrieved": "2026-07-04",
+  "source_sha256": "84740535b1f4a9a8fec8ebfe8f7577889837b7639cd7f5e40ef8826c6ab2f69a",
+  "source_version": "2026-07-04+sha256:84740535b1f4"
+}

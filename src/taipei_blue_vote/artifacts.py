@@ -1,0 +1,167 @@
+"""Write the compact, committed analysis artifacts."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Mapping, Sequence
+
+from .analysis import estimate_young_votes
+from .chart import render_html, render_svg
+from .outputs import write_csv, write_json
+from .pipeline import AnalysisBundle, ProxyResult
+
+
+YOUNG_ELIGIBLE_20_39 = 571_536
+YOUNG_TURNOUT = 0.715
+YOUNG_SUPPORT_RANGE = (0.135, 0.15, 0.16)
+
+
+def write_artifacts(
+    root: Path,
+    analysis: AnalysisBundle,
+    proxies: Sequence[ProxyResult],
+    source_manifest: Mapping[str, object],
+) -> None:
+    """Write derived CSV/JSON plus SVG and standalone HTML charts."""
+    derived = root / "data" / "derived"
+    charts = root / "charts"
+    baseline_city = analysis.city[0]
+    baseline_cohort = analysis.cohort[0]
+
+    write_csv(
+        derived / "city_trend.csv",
+        [
+            "year",
+            "valid_votes",
+            "blue_votes",
+            "blue_share",
+            "ko_votes",
+            "ko_share",
+            "blue_vote_change_from_2000",
+            "share_point_change_from_2000",
+        ],
+        [
+            [
+                row.year,
+                row.valid_votes,
+                row.blue_votes,
+                f"{row.blue_share:.4f}",
+                row.ko_votes,
+                f"{row.ko_votes / row.valid_votes * 100:.4f}",
+                row.blue_votes - baseline_city.blue_votes,
+                f"{row.blue_share - baseline_city.blue_share:.4f}",
+            ]
+            for row in analysis.city
+        ],
+    )
+
+    write_csv(
+        derived / "deep_blue_cohort.csv",
+        [
+            "year",
+            "village_count",
+            "valid_votes",
+            "blue_votes",
+            "blue_share",
+            "blue_vote_change_from_2000",
+            "share_point_change_from_2000",
+        ],
+        [
+            [
+                row.year,
+                len(analysis.cohort_keys),
+                row.valid_votes,
+                row.blue_votes,
+                f"{row.blue_share:.4f}",
+                row.blue_votes - baseline_cohort.blue_votes,
+                f"{row.blue_share - baseline_cohort.blue_share:.4f}",
+            ]
+            for row in analysis.cohort
+        ],
+    )
+
+    write_csv(
+        derived / "election_deltas.csv",
+        ["year", "share_point_delta", "blue_vote_delta"],
+        [[year, f"{share_delta:.2f}", vote_delta] for year, share_delta, vote_delta in analysis.deltas],
+    )
+
+    write_csv(
+        derived / "military_village_proxies.csv",
+        [
+            "proxy_name",
+            "district",
+            "village",
+            "year",
+            "valid_votes",
+            "blue_votes",
+            "blue_share",
+            "continuously_comparable_from_2000",
+        ],
+        [
+            [
+                row.proxy_name,
+                row.district,
+                row.village,
+                row.year,
+                row.valid_votes,
+                row.blue_votes,
+                f"{row.blue_share:.4f}",
+                str(row.continuously_comparable).lower(),
+            ]
+            for row in proxies
+        ],
+    )
+
+    low, central, high = estimate_young_votes(
+        YOUNG_ELIGIBLE_20_39,
+        YOUNG_TURNOUT,
+        *YOUNG_SUPPORT_RANGE,
+    )
+    city_loss = baseline_city.blue_votes - analysis.city[-1].blue_votes
+    write_csv(
+        derived / "young_replacement.csv",
+        [
+            "eligible_age_20_39",
+            "turnout_assumption",
+            "estimated_ballots",
+            "hou_support_low",
+            "hou_support_central",
+            "hou_support_high",
+            "estimated_hou_votes_low",
+            "estimated_hou_votes_central",
+            "estimated_hou_votes_high",
+            "citywide_blue_vote_loss_2000_2024",
+            "offset_share_low",
+            "offset_share_central",
+            "offset_share_high",
+        ],
+        [
+            [
+                YOUNG_ELIGIBLE_20_39,
+                f"{YOUNG_TURNOUT:.3f}",
+                round(YOUNG_ELIGIBLE_20_39 * YOUNG_TURNOUT),
+                *(f"{rate:.3f}" for rate in YOUNG_SUPPORT_RANGE),
+                low,
+                central,
+                high,
+                city_loss,
+                *_offsets((low, central, high), city_loss),
+            ]
+        ],
+    )
+
+    write_json(derived / "source_manifest.json", source_manifest)
+
+    svg = render_svg(analysis.deltas)
+    charts.mkdir(parents=True, exist_ok=True)
+    (charts / "taipei-blue-election-deltas.svg").write_text(svg, encoding="utf-8")
+    (charts / "taipei-blue-election-deltas.html").write_text(
+        render_html(svg), encoding="utf-8"
+    )
+
+
+def _offsets(estimates: Sequence[int], city_loss: int) -> tuple[str, str, str]:
+    if city_loss <= 0:
+        return ("", "", "")
+    return tuple(f"{estimate / city_loss:.4f}" for estimate in estimates)

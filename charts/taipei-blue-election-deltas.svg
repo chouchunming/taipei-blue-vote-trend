@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="chart-title chart-desc">
+  <title id="chart-title">台北市泛藍總統票每屆增減</title>
+  <desc id="chart-desc">2004 至 2024 年各次總統選舉相對前一屆的泛藍得票率百分點與票數變化。2016 年降幅最大，2008 年明顯反彈，2020 年票數增加但得票率仍下降。</desc>
+  <style>
+    text { fill: #172033; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; font-size: 15px; }
+    .panel-title { font-size: 20px; font-weight: 600; }
+    .axis-label, .note { fill: #596579; font-size: 13px; }
+    .year, .value { font-variant-numeric: tabular-nums; }
+    .value { font-weight: 600; }
+    .center { text-anchor: middle; }
+    .end { text-anchor: end; }
+    .guide { stroke: #cbd5e1; stroke-width: 1; }
+    .zero { stroke: #475569; stroke-opacity: 0.72; stroke-width: 1; }
+    .bar.negative { fill: #c2413b; }
+    .bar.positive { fill: #2870a7; }
+  </style>
+  <rect width="1200" height="500" fill="#ffffff" />
+  <g aria-label="得票率增減">
+    <text class="panel-title" x="20" y="54">得票率增減（百分點）</text>
+    <text class="axis-label" x="90" y="86">−13</text>
+    <text class="axis-label center" x="304.5" y="86">0</text>
+    <text class="axis-label end" x="420" y="86">+7</text>
+    <line class="zero" x1="304.5" y1="96" x2="304.5" y2="438" />
+    <text class="year" x="20" y="136">2004</text>
+    <line class="guide" x1="90" y1="130" x2="420" y2="130" />
+    <rect class="bar negative" x="219.36" y="122" width="85.14" height="16" rx="3" />
+    <text class="value end" x="515" y="136">−5.16 pp</text>
+    <text class="year" x="20" y="190">2008</text>
+    <line class="guide" x1="90" y1="184" x2="420" y2="184" />
+    <rect class="bar positive" x="304.50" y="176" width="107.25" height="16" rx="3" />
+    <text class="value end" x="515" y="190">+6.50 pp</text>
+    <text class="year" x="20" y="244">2012</text>
+    <line class="guide" x1="90" y1="238" x2="420" y2="238" />
+    <rect class="bar negative" x="261.93" y="230" width="42.57" height="16" rx="3" />
+    <text class="value end" x="515" y="244">−2.58 pp</text>
+    <text class="year" x="20" y="298">2016</text>
+    <line class="guide" x1="90" y1="292" x2="420" y2="292" />
+    <rect class="bar negative" x="99.73" y="284" width="204.76" height="16" rx="3" />
+    <text class="value end" x="515" y="298">−12.41 pp</text>
+    <text class="year" x="20" y="352">2020</text>
+    <line class="guide" x1="90" y1="346" x2="420" y2="346" />
+    <rect class="bar negative" x="276.62" y="338" width="27.88" height="16" rx="3" />
+    <text class="value end" x="515" y="352">−1.69 pp</text>
+    <text class="year" x="20" y="406">2024</text>
+    <line class="guide" x1="90" y1="400" x2="420" y2="400" />
+    <rect class="bar negative" x="168.21" y="392" width="136.29" height="16" rx="3" />
+    <text class="value end" x="515" y="406">−8.26 pp</text>
+  </g>
+  <g aria-label="選票增減">
+    <text class="panel-title" x="630" y="54">選票增減（票）</text>
+    <text class="axis-label" x="700" y="86">−30萬</text>
+    <text class="axis-label center" x="930.233" y="86">0</text>
+    <text class="axis-label end" x="1030" y="86">+13萬</text>
+    <line class="zero" x1="930.233" y1="96" x2="930.233" y2="438" />
+    <text class="year" x="630" y="136">2004</text>
+    <line class="guide" x1="700" y1="130" x2="1030" y2="130" />
+    <rect class="bar negative" x="867.89" y="122" width="62.34" height="16" rx="3" />
+    <text class="value end" x="1125" y="136">−81,232</text>
+    <text class="year" x="630" y="190">2008</text>
+    <line class="guide" x1="700" y1="184" x2="1030" y2="184" />
+    <rect class="bar positive" x="930.23" y="176" width="87.24" height="16" rx="3" />
+    <text class="value end" x="1125" y="190">+113,676</text>
+    <text class="year" x="630" y="244">2012</text>
+    <line class="guide" x1="700" y1="238" x2="1030" y2="238" />
+    <rect class="bar negative" x="898.48" y="230" width="31.76" height="16" rx="3" />
+    <text class="value end" x="1125" y="244">−41,381</text>
+    <text class="year" x="630" y="298">2016</text>
+    <line class="guide" x1="700" y1="292" x2="1030" y2="292" />
+    <rect class="bar negative" x="723.12" y="284" width="207.11" height="16" rx="3" />
+    <text class="value end" x="1125" y="298">−269,870</text>
+    <text class="year" x="630" y="352">2020</text>
+    <line class="guide" x1="700" y1="346" x2="1030" y2="346" />
+    <rect class="bar positive" x="930.23" y="338" width="43.21" height="16" rx="3" />
+    <text class="value end" x="1125" y="352">+56,304</text>
+    <text class="year" x="630" y="406">2024</text>
+    <line class="guide" x1="700" y1="400" x2="1030" y2="400" />
+    <rect class="bar negative" x="800.27" y="392" width="129.96" height="16" rx="3" />
+    <text class="value end" x="1125" y="406">−169,341</text>
+  </g>
+  <text class="note" x="20" y="478">2000 年為基準；每列皆與前一次總統選舉相比。負值與正值同時以方向、正負號及位置區分。</text>
+</svg>
