@@ -78,4 +78,3 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 ## License
 
 程式碼採 MIT License。資料仍依各原始提供者的授權與註明方式使用。
-

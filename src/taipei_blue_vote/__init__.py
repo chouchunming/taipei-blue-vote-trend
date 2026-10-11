@@ -3,4 +3,3 @@
 from .analysis import ELECTION_YEARS
 
 __all__ = ["ELECTION_YEARS"]
-
