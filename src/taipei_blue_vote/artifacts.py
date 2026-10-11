@@ -7,7 +7,7 @@ from typing import Mapping, Sequence
 
 from .age_structure import AgeModel
 from .analysis import estimate_young_votes
-from .chart import render_age_model_svg, render_html, render_svg
+from .chart import render_age_model_svg, render_bloc_svg, render_html, render_svg
 from .outputs import write_csv, write_json
 from .pipeline import AnalysisBundle, ProxyResult
 
@@ -241,6 +241,25 @@ def write_artifacts(
     (charts / "taipei-blue-election-deltas.svg").write_text(svg, encoding="utf-8")
     (charts / "taipei-blue-election-deltas.html").write_text(
         render_html(svg), encoding="utf-8"
+    )
+
+    bloc_svg = render_bloc_svg(
+        [
+            (row.year, row.blue_share, row.green_share, row.other_share)
+            for row in analysis.city
+        ],
+        [
+            (row.year, row.volatility_pp, row.vote_equivalent)
+            for row in analysis.volatility
+        ],
+    )
+    (charts / "taipei-bloc-and-volatility.svg").write_text(
+        bloc_svg,
+        encoding="utf-8",
+    )
+    (charts / "taipei-bloc-and-volatility.html").write_text(
+        render_html(bloc_svg, title="臺北市藍綠與選票波動"),
+        encoding="utf-8",
     )
 
 

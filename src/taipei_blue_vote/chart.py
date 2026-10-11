@@ -10,6 +10,8 @@ from .age_structure import AgeModel
 
 
 DeltaRow = tuple[int, float, int]
+BlocShareRow = tuple[int, float, float, float]
+VolatilityRow = tuple[int, float, int]
 
 
 def _signed(value: float | int, digits: int = 0) -> str:
@@ -107,6 +109,129 @@ def render_svg(rows: Sequence[DeltaRow]) -> str:
     {vote_panel}
   </g>
   <text class="note" x="20" y="478">2000 年為基準；每列皆與前一次總統選舉相比。負值與正值同時以方向、正負號及位置區分。</text>
+</svg>
+'''
+
+
+def render_bloc_svg(
+    bloc_rows: Sequence[BlocShareRow],
+    volatility_rows: Sequence[VolatilityRow],
+) -> str:
+    """Render bloc shares and election-to-election three-bloc volatility."""
+    if len(bloc_rows) < 2 or len(volatility_rows) != len(bloc_rows) - 1:
+        raise ValueError("bloc chart requires one volatility row per election transition")
+
+    share_left, share_top, share_width, share_height = 90.0, 120.0, 1020.0, 250.0
+    share_max = 70.0
+    share_step = share_width / (len(bloc_rows) - 1)
+
+    def share_x(index: int) -> float:
+        return share_left + index * share_step
+
+    def share_y(value: float) -> float:
+        return share_top + share_height - value / share_max * share_height
+
+    series = (
+        ("泛藍", 1, "blue"),
+        ("泛綠", 2, "green"),
+        ("其他候選人", 3, "other"),
+    )
+    share_series = []
+    for label, value_index, color_class in series:
+        points = " ".join(
+            f"{share_x(index):.2f},{share_y(row[value_index]):.2f}"
+            for index, row in enumerate(bloc_rows)
+        )
+        circles = "".join(
+            f'<circle class="share-point {color_class}" cx="{share_x(index):.2f}" '
+            f'cy="{share_y(row[value_index]):.2f}" r="4.5"><title>{row[0]} {label} '
+            f'{row[value_index]:.2f}%</title></circle>'
+            for index, row in enumerate(bloc_rows)
+        )
+        share_series.append(
+            f'<polyline class="share-line {color_class}" points="{points}" />{circles}'
+        )
+
+    share_grid = []
+    for value in (0, 20, 40, 60, 70):
+        y = share_y(value)
+        share_grid.extend(
+            [
+                f'<line class="grid" x1="{share_left:g}" y1="{y:.2f}" x2="{share_left + share_width:g}" y2="{y:.2f}" />',
+                f'<text class="tick end" x="{share_left - 14:g}" y="{y + 5:.2f}">{value}%</text>',
+            ]
+        )
+    for index, row in enumerate(bloc_rows):
+        x = share_x(index)
+        share_grid.append(
+            f'<text class="tick center" x="{x:.2f}" y="{share_top + share_height + 28:g}">{row[0]}</text>'
+        )
+
+    last = bloc_rows[-1]
+    legend = "".join(
+        f'<g transform="translate({760 + index * 135} 71)">'
+        f'<line class="legend-line {color_class}" x1="0" y1="0" x2="24" y2="0" />'
+        f'<text class="legend" x="32" y="5">{label} {last[value_index]:.2f}%</text></g>'
+        for index, (label, value_index, color_class) in enumerate(series)
+    )
+
+    volatility_left, volatility_top = 110.0, 470.0
+    volatility_width, volatility_height = 980.0, 145.0
+    volatility_max = max(row[1] for row in volatility_rows) * 1.12
+    bar_slot = volatility_width / len(volatility_rows)
+    bar_width = min(90.0, bar_slot * 0.56)
+    bars = []
+    for index, (year, value, vote_equivalent) in enumerate(volatility_rows):
+        x = volatility_left + index * bar_slot + (bar_slot - bar_width) / 2
+        height = value / volatility_max * volatility_height
+        y = volatility_top + volatility_height - height
+        bars.extend(
+            [
+                f'<rect class="volatility-bar" x="{x:.2f}" y="{y:.2f}" width="{bar_width:.2f}" height="{height:.2f}" rx="5"><title>{year} {value:.2f} pp／{vote_equivalent:,} 票等值</title></rect>',
+                f'<text class="bar-value center" x="{x + bar_width / 2:.2f}" y="{y - 10:.2f}">{value:.2f} pp</text>',
+                f'<text class="tick center" x="{x + bar_width / 2:.2f}" y="{volatility_top + volatility_height + 24:g}">{year}</text>',
+                f'<text class="vote-note center" x="{x + bar_width / 2:.2f}" y="{volatility_top + volatility_height + 43:g}">{vote_equivalent:,} 票等值</text>',
+            ]
+        )
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="bloc-title bloc-desc">
+  <title id="bloc-title">臺北市 2000–2024 藍綠與選票波動</title>
+  <desc id="bloc-desc">上圖為泛藍、泛綠及其他候選人占有效票比例；下圖為相鄰選舉三類選票的最低淨移動規模。其他候選人票不等於所有中間選民，波動也不是可識別的個人轉投人數。</desc>
+  <style>
+    text {{ fill: #172033; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; font-size: 14px; }}
+    .title {{ font-size: 25px; font-weight: 700; }}
+    .panel-title {{ font-size: 18px; font-weight: 650; }}
+    .subtitle, .tick, .vote-note, .note {{ fill: #596579; font-size: 12px; }}
+    .center {{ text-anchor: middle; }}
+    .end {{ text-anchor: end; }}
+    .grid {{ stroke: #e2e8f0; stroke-width: 1; }}
+    .share-line {{ fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }}
+    .share-line.blue, .share-point.blue, .legend-line.blue {{ stroke: #2870a7; }}
+    .share-line.green, .share-point.green, .legend-line.green {{ stroke: #2f855a; }}
+    .share-line.other, .share-point.other, .legend-line.other {{ stroke: #d97706; }}
+    .share-point.blue {{ fill: #2870a7; }}
+    .share-point.green {{ fill: #2f855a; }}
+    .share-point.other {{ fill: #d97706; }}
+    .legend-line {{ stroke-width: 4; }}
+    .legend {{ font-weight: 600; }}
+    .volatility-bar {{ fill: #7562a8; }}
+    .bar-value {{ font-size: 14px; font-weight: 700; }}
+  </style>
+  <rect width="1200" height="720" fill="#ffffff" />
+  <text class="title" x="50" y="42">臺北市 2000–2024 藍綠與選票波動</text>
+  <text class="subtitle" x="50" y="70">票數與得票率是不同指標；波動票量為以當屆有效票換算的等值。</text>
+  {legend}
+  <g aria-label="三類候選人得票率">
+    <text class="panel-title" x="50" y="105">候選人類別得票率</text>
+    {''.join(share_grid)}
+    {''.join(share_series)}
+  </g>
+  <g aria-label="最低淨移動規模">
+    <text class="panel-title" x="50" y="440">相對前一屆的最低淨移動規模</text>
+    <line class="grid" x1="{volatility_left:g}" y1="{volatility_top + volatility_height:g}" x2="{volatility_left + volatility_width:g}" y2="{volatility_top + volatility_height:g}" />
+    {''.join(bars)}
+  </g>
+  <text class="note" x="50" y="700">「其他候選人」是可觀察選票類別，不是所有中間選民；波動是聚合淨變化，也可能包含投票率與選民結構變化。</text>
 </svg>
 '''
 

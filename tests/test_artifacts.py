@@ -57,6 +57,11 @@ class ArtifactTests(unittest.TestCase):
             html = (root / "charts/taipei-blue-election-deltas.html").read_text()
             self.assertIn('role="img"', svg)
             self.assertTrue(html.startswith("<!doctype html>"))
+            bloc_svg = (root / "charts/taipei-bloc-and-volatility.svg").read_text()
+            bloc_html = (root / "charts/taipei-bloc-and-volatility.html").read_text()
+            self.assertIn("泛綠", bloc_svg)
+            self.assertIn("最低淨移動規模", bloc_svg)
+            self.assertTrue(bloc_html.startswith("<!doctype html>"))
 
 
 def _blue_candidate(year):

@@ -1,5 +1,6 @@
 import unittest
 
+import taipei_blue_vote.chart as chart_module
 from taipei_blue_vote.chart import render_html, render_svg
 
 
@@ -51,6 +52,40 @@ class ChartTests(unittest.TestCase):
         for unsupported in ("Canvas", "CanvasText", "GrayText", "AccentColor", "LinkText"):
             self.assertNotIn(unsupported, svg)
         self.assertIn('fill="#ffffff"', svg)
+
+    def test_bloc_svg_contains_shares_and_six_volatility_bars(self):
+        blocs = [
+            (2000, 61.69, 37.64, 0.67),
+            (2004, 56.53, 43.47, 0.0),
+            (2008, 63.03, 36.97, 0.0),
+            (2012, 60.46, 39.54, 0.0),
+            (2016, 48.04, 51.96, 0.0),
+            (2020, 46.35, 53.65, 0.0),
+            (2024, 38.08, 38.13, 23.79),
+        ]
+        volatility = [
+            (2004, 5.82, 92_000),
+            (2008, 6.50, 104_000),
+            (2012, 2.58, 41_000),
+            (2016, 12.41, 181_000),
+            (2020, 1.69, 28_000),
+            (2024, 23.79, 366_854),
+        ]
+
+        svg = chart_module.render_bloc_svg(blocs, volatility)
+
+        for label in (
+            "泛藍",
+            "泛綠",
+            "其他候選人",
+            "最低淨移動規模",
+            "23.79%",
+            "23.79 pp",
+            "366,854 票等值",
+        ):
+            self.assertIn(label, svg)
+        self.assertEqual(svg.count('class="volatility-bar"'), 6)
+        self.assertIn('role="img"', svg)
 
 
 if __name__ == "__main__":
