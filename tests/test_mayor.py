@@ -145,6 +145,24 @@ class MayorAnalysisTests(unittest.TestCase):
         self.assertEqual(deep_blue, frozenset({("甲區", "深藍里")}))
         self.assertEqual(deep_green, frozenset({("甲區", "深綠里")}))
 
+    def test_cohort_threshold_uses_exact_vote_ratio(self):
+        villages = tuple(
+            MayorVillageResult(
+                classification="coalition",
+                year=year,
+                district="甲區",
+                village="近門檻里",
+                valid_votes=2_000_001,
+                blue_votes=1_300_000,
+                green_votes=700_001,
+                other_votes=0,
+            )
+            for year in MAYOR_YEARS
+        )
+
+        self.assertEqual(villages[0].blue_share, 65.0)
+        self.assertEqual(select_mayor_cohort(villages, "blue", 65.0), frozenset())
+
     def test_mayor_deltas_and_volatility_measure_three_bloc_change(self):
         city = [
             MayorElectionResult("coalition", 2002, 1000, 600, 350, 50),
@@ -161,6 +179,21 @@ class MayorAnalysisTests(unittest.TestCase):
         self.assertEqual(volatility.classification, "coalition")
         self.assertEqual(volatility.volatility_pp, 10.0)
         self.assertEqual(volatility.vote_equivalent, 100)
+
+    def test_deltas_and_volatility_use_exact_vote_ratios(self):
+        city = [
+            MayorElectionResult("coalition", 2002, 6, 5, 1, 0),
+            MayorElectionResult("coalition", 2006, 63, 34, 29, 0),
+        ]
+
+        delta = mayor_bloc_deltas(city)[0]
+        volatility = mayor_electoral_volatility(city)[0]
+
+        self.assertEqual(delta.blue_share_delta, -29.37)
+        self.assertEqual(delta.green_share_delta, 29.37)
+        self.assertEqual(delta.other_share_delta, 0.0)
+        self.assertEqual(volatility.volatility_pp, 29.3651)
+        self.assertEqual(volatility.vote_equivalent, 19)
 
     def test_analyze_mayor_rows_composes_scenarios_cohorts_and_candidates(self):
         analysis = analyze_mayor_rows(_six_year_rows())

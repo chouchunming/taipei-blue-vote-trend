@@ -314,12 +314,15 @@ def select_mayor_cohort(
     selected = set()
     for key, yearly in by_key.items():
         baseline = yearly.get(2002)
+        if baseline is None:
+            continue
+        baseline_votes = (
+            baseline.blue_votes if bloc == "blue" else baseline.green_votes
+        )
         if (
-            baseline is not None
-            and set(yearly) == required_years
+            set(yearly) == required_years
             and baseline.valid_votes >= minimum_valid
-            and (baseline.blue_share if bloc == "blue" else baseline.green_share)
-            >= threshold
+            and _raw_share(baseline_votes, baseline.valid_votes) >= threshold
         ):
             selected.add(key)
     return frozenset(selected)
@@ -334,15 +337,24 @@ def mayor_bloc_deltas(
     for previous, current in zip(data, data[1:]):
         if current.classification != previous.classification:
             raise ValueError("mayor delta rows must use one classification")
+        blue_share_delta = _raw_share(
+            current.blue_votes, current.valid_votes
+        ) - _raw_share(previous.blue_votes, previous.valid_votes)
+        green_share_delta = _raw_share(
+            current.green_votes, current.valid_votes
+        ) - _raw_share(previous.green_votes, previous.valid_votes)
+        other_share_delta = _raw_share(
+            current.other_votes, current.valid_votes
+        ) - _raw_share(previous.other_votes, previous.valid_votes)
         output.append(
             MayorBlocDelta(
                 classification=current.classification,
                 year=current.year,
-                blue_share_delta=round(current.blue_share - previous.blue_share, 2),
+                blue_share_delta=round(blue_share_delta, 2),
                 blue_vote_delta=current.blue_votes - previous.blue_votes,
-                green_share_delta=round(current.green_share - previous.green_share, 2),
+                green_share_delta=round(green_share_delta, 2),
                 green_vote_delta=current.green_votes - previous.green_votes,
-                other_share_delta=round(current.other_share - previous.other_share, 2),
+                other_share_delta=round(other_share_delta, 2),
                 other_vote_delta=current.other_votes - previous.other_votes,
             )
         )
@@ -358,24 +370,37 @@ def mayor_electoral_volatility(
     for previous, current in zip(data, data[1:]):
         if current.classification != previous.classification:
             raise ValueError("mayor volatility rows must use one classification")
-        volatility_pp = round(
-            (
-                abs(current.blue_share - previous.blue_share)
-                + abs(current.green_share - previous.green_share)
-                + abs(current.other_share - previous.other_share)
+        raw_volatility_pp = (
+            abs(
+                _raw_share(current.blue_votes, current.valid_votes)
+                - _raw_share(previous.blue_votes, previous.valid_votes)
             )
-            / 2,
-            4,
-        )
+            + abs(
+                _raw_share(current.green_votes, current.valid_votes)
+                - _raw_share(previous.green_votes, previous.valid_votes)
+            )
+            + abs(
+                _raw_share(current.other_votes, current.valid_votes)
+                - _raw_share(previous.other_votes, previous.valid_votes)
+            )
+        ) / 2
         output.append(
             MayorVolatility(
                 classification=current.classification,
                 year=current.year,
-                volatility_pp=volatility_pp,
-                vote_equivalent=round(current.valid_votes * volatility_pp / 100),
+                volatility_pp=round(raw_volatility_pp, 4),
+                vote_equivalent=round(
+                    current.valid_votes * raw_volatility_pp / 100
+                ),
             )
         )
     return tuple(output)
+
+
+def _raw_share(votes: int, valid_votes: int) -> float:
+    if valid_votes <= 0:
+        raise ValueError("valid votes must be positive")
+    return votes / valid_votes * 100
 
 
 def analyze_mayor_rows(rows: Iterable[MayorVoteRow]) -> MayorAnalysisBundle:
