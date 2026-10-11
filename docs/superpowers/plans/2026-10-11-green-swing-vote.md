@@ -469,6 +469,6 @@ git add README.md report/findings.md docs/superpowers/plans/2026-10-11-green-swi
 git commit -m "docs: report green base and swing vote findings"
 ```
 
-- [ ] **Step 5: Push, verify GitHub, and integrate**
+- [x] **Step 5: Push, verify GitHub, and integrate**
 
 Push the feature branch, verify its commit with `git ls-remote`, fast-forward `main`, rerun the full test suite on `main`, push `main`, verify the remote SHA and chart file through the GitHub API, and wait for the GitHub Actions `test` workflow to conclude successfully.
