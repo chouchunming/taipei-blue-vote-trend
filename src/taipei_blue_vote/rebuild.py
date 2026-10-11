@@ -9,16 +9,25 @@ from typing import Iterable, Mapping
 from .age_structure import fit_age_model, join_age_and_votes, parse_population_api_json
 from .analysis import VillageResult, VoteRow
 from .artifacts import write_age_artifacts, write_artifacts
+from .mayor import MayorAnalysisBundle, analyze_mayor_rows
 from .pipeline import AnalysisBundle, analyze_rows, proxy_results
 from .sources import (
     INDEX_URL,
     cached_payload,
     csv_url,
+    parse_mayor_vote_csv,
     parse_vote_csv,
     select_taipei_presidential_files,
     sha256_hex,
 )
-from .validation import EXPECTED_CITY_TOTALS, verify_candidate_coverage, verify_city_totals
+from .validation import (
+    EXPECTED_CITY_TOTALS,
+    EXPECTED_MAYOR_CITY_TOTALS,
+    verify_candidate_coverage,
+    verify_city_totals,
+    verify_mayor_candidate_coverage,
+    verify_mayor_city_totals,
+)
 
 
 PROXY_SPECS = (
@@ -120,6 +129,56 @@ def rebuild_from_payloads(
     }
     write_artifacts(root, analysis, proxies, manifest)
     return analysis
+
+
+def prepare_mayor_from_payloads(
+    index_payload: bytes,
+    filenames: Mapping[int, str],
+    payloads: Mapping[int, bytes],
+    *,
+    expected_city_totals=EXPECTED_MAYOR_CITY_TOTALS,
+) -> tuple[MayorAnalysisBundle, dict[str, object]]:
+    rows = []
+    file_records = []
+    for year, filename in sorted(filenames.items()):
+        if year not in payloads:
+            raise ValueError(f"missing payload for {year}")
+        payload = payloads[year]
+        parsed = parse_mayor_vote_csv(payload)
+        if any(row.year != year for row in parsed):
+            raise ValueError(f"unexpected election year inside {filename}")
+        rows.extend(parsed)
+        file_records.append(
+            {
+                "bytes": len(payload),
+                "filename": filename,
+                "rows": len(parsed),
+                "sha256": sha256_hex(payload),
+                "url": csv_url(filename),
+                "year": year,
+            }
+        )
+
+    verify_mayor_candidate_coverage(rows, years=sorted(filenames))
+    analysis = analyze_mayor_rows(rows)
+    verify_mayor_city_totals(analysis, expected=expected_city_totals)
+    index = json.loads(index_payload.decode("utf-8-sig"))
+    manifest = {
+        "build_id": index.get("buildId"),
+        "compilation_attribution": index.get("compilationAttribution"),
+        "compilation_license": index.get("compilationLicense"),
+        "dataset": "TaiwanVotes normalized CEC Taipei mayor CSV",
+        "files": file_records,
+        "index_sha256": sha256_hex(index_payload),
+        "index_url": INDEX_URL,
+        "schema_version": index.get("schemaVersion"),
+        "source_license": index.get("sourceLicense"),
+        "source_modified": index.get("sourceModified"),
+        "source_retrieved": index.get("sourceRetrieved"),
+        "source_sha256": index.get("sourceSha256"),
+        "source_version": index.get("sourceVersion"),
+    }
+    return analysis, manifest
 
 
 def rebuild_age_from_payload(

@@ -9,11 +9,14 @@ from taipei_blue_vote.analysis import (
     GREEN_CANDIDATES,
     VillageResult,
 )
+from taipei_blue_vote.mayor import COALITION_BLUE, COALITION_GREEN
 from taipei_blue_vote.rebuild import (
     PROXY_SPECS,
+    prepare_mayor_from_payloads,
     rebuild_age_from_payload,
     rebuild_from_payloads,
 )
+from taipei_blue_vote.sources import MAYOR_YEARS, sha256_hex
 
 
 class RebuildTests(unittest.TestCase):
@@ -98,6 +101,79 @@ class RebuildTests(unittest.TestCase):
             village = (root / "data/derived/village_age_structure_2024.csv").read_text()
             self.assertEqual(len(village.splitlines()), 9)
 
+    def test_prepare_mayor_from_payloads_returns_analysis_and_manifest(self):
+        filenames = {year: f"縣市長_{year}_臺北市.csv" for year in MAYOR_YEARS}
+        index_payload = json.dumps(
+            {
+                "schemaVersion": 3,
+                "buildId": "mayor-fixture",
+                "sourceRetrieved": "2026-07-04",
+                "sourceModified": "2026-01-26",
+                "sourceLicense": "fixture license",
+                "compilationLicense": "fixture compilation license",
+                "files": [
+                    {
+                        "kind": "votes",
+                        "type": "縣市長",
+                        "year": year,
+                        "county": "臺北市",
+                        "file": filename,
+                    }
+                    for year, filename in filenames.items()
+                ],
+            },
+            ensure_ascii=False,
+        ).encode()
+        payloads = {year: _mayor_csv_payload(year) for year in MAYOR_YEARS}
+        expected = {
+            "coalition": {
+                year: (len(COALITION_BLUE[year] | COALITION_GREEN[year]),
+                       len(COALITION_BLUE[year]),
+                       len(COALITION_GREEN[year]),
+                       0)
+                for year in MAYOR_YEARS
+            },
+            "official_nomination": {
+                2002: (2, 1, 1, 0),
+                2006: (4, 1, 1, 2),
+                2010: (2, 1, 1, 0),
+                2014: (2, 1, 0, 1),
+                2018: (2, 1, 1, 0),
+                2022: (2, 1, 1, 0),
+            },
+        }
+
+        analysis, manifest = prepare_mayor_from_payloads(
+            index_payload,
+            filenames,
+            payloads,
+            expected_city_totals=expected,
+        )
+
+        self.assertEqual(
+            tuple(scenario.classification for scenario in analysis.scenarios),
+            ("coalition", "official_nomination"),
+        )
+        self.assertEqual(manifest["dataset"], "TaiwanVotes normalized CEC Taipei mayor CSV")
+        self.assertEqual(len(manifest["files"]), 6)
+        self.assertEqual(
+            [record["year"] for record in manifest["files"]],
+            list(MAYOR_YEARS),
+        )
+        self.assertEqual(manifest["index_sha256"], sha256_hex(index_payload))
+        self.assertEqual(
+            [record["sha256"] for record in manifest["files"]],
+            [sha256_hex(payloads[year]) for year in MAYOR_YEARS],
+        )
+
+    def test_prepare_mayor_from_payloads_rejects_internal_year_mismatch(self):
+        filenames = {year: f"縣市長_{year}_臺北市.csv" for year in MAYOR_YEARS}
+        payloads = {year: _mayor_csv_payload(year) for year in MAYOR_YEARS}
+        payloads[2014] = _mayor_csv_payload(2014, internal_year=2018)
+
+        with self.assertRaisesRegex(ValueError, filenames[2014]):
+            prepare_mayor_from_payloads(b"{}", filenames, payloads)
+
 
 def _csv_payload(year):
     header = "屆期,鄉鎮市區,村里,候選人,得票數\n"
@@ -108,6 +184,18 @@ def _csv_payload(year):
         for candidate, votes in zip(candidates, blue_votes)
     ]
     rows.append(f"{year},信義區,景新里,{next(iter(GREEN_CANDIDATES[year]))},30\n")
+    return (header + "".join(rows)).encode()
+
+
+def _mayor_csv_payload(year, *, internal_year=None):
+    header = "選舉名稱,屆期,縣市,鄉鎮市區,村里,選區,號次,候選人,政黨,得票數,當選註記\n"
+    row_year = year if internal_year is None else internal_year
+    candidates = sorted(COALITION_BLUE[year] | COALITION_GREEN[year])
+    rows = [
+        f"{year}年臺北市市長選舉,{row_year},臺北市,測試區,測試里,市長,{number},"
+        f"{candidate},測試政黨,1,\n"
+        for number, candidate in enumerate(candidates, start=1)
+    ]
     return (header + "".join(rows)).encode()
 
 
