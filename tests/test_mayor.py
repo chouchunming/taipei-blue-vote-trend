@@ -195,6 +195,21 @@ class MayorAnalysisTests(unittest.TestCase):
         self.assertEqual(volatility.volatility_pp, 29.3651)
         self.assertEqual(volatility.vote_equivalent, 19)
 
+    def test_vote_equivalent_uses_unrounded_volatility(self):
+        city = [
+            MayorElectionResult(
+                "coalition", 2002, 1_361_913, 873_102, 488_811, 0
+            ),
+            MayorElectionResult(
+                "coalition", 2006, 1_286_089, 745_366, 529_241, 11_482
+            ),
+        ]
+
+        volatility = mayor_electoral_volatility(city)[0]
+
+        self.assertEqual(volatility.volatility_pp, 6.1525)
+        self.assertEqual(volatility.vote_equivalent, 79_126)
+
     def test_analyze_mayor_rows_composes_scenarios_cohorts_and_candidates(self):
         analysis = analyze_mayor_rows(_six_year_rows())
 
