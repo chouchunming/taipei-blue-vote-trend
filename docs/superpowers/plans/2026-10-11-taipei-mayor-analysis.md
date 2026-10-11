@@ -502,7 +502,7 @@ git add README.md report/findings.md docs/superpowers/plans/2026-10-11-taipei-ma
 git commit -m "docs: report Taipei mayor vote findings"
 ```
 
-- [ ] **Step 5: Push, integrate, and verify GitHub**
+- [x] **Step 5: Push, integrate, and verify GitHub**
 
 Push the feature branch and verify its SHA with `git ls-remote`. Fast-forward `main`, rerun the complete test suite on `main`, push `main`, and verify:
 
