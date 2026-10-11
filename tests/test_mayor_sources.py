@@ -122,6 +122,16 @@ class MayorSourceTests(unittest.TestCase):
             MayorVoteRow(2014, "信義區", "三張里", "柯文哲", "無黨籍", 956),
         )
 
+    def test_parse_mayor_vote_csv_normalizes_cross_year_election_term(self):
+        payload = (
+            "選舉名稱,屆期,縣市,鄉鎮市區,村里,選區,號次,候選人,政黨,得票數,當選註記\n"
+            "2002年直轄市長選舉,2001/02,臺北市,北投區,建民里,臺北市,1,李應元,民主進步黨,1277,\n"
+        ).encode()
+
+        row = parse_mayor_vote_csv(payload)[0]
+
+        self.assertEqual(row.year, 2002)
+
     def test_parse_mayor_vote_csv_rejects_missing_party_column(self):
         payload = "屆期,鄉鎮市區,村里,候選人,得票數\n2014,信義區,三張里,柯文哲,956\n".encode()
 

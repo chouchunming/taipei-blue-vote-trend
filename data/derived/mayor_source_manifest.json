@@ -1,0 +1,73 @@
+{
+  "build_id": "20260914103616",
+  "compilation_attribution": "視覺化速查選舉資料庫（taiwanvotes.tw）",
+  "compilation_license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "dataset": "TaiwanVotes normalized CEC Taipei mayor CSV",
+  "files": [
+    {
+      "bytes": 98199,
+      "filename": "縣市長_2001-02_臺北市.csv",
+      "rows": 898,
+      "sha256": "3aae36aec58027f8aced98117543019a990bbed4fd21376b0a04367e9145aa60",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2001-02_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2002
+    },
+    {
+      "bytes": 310143,
+      "filename": "縣市長_2005-06_臺北市.csv",
+      "rows": 2694,
+      "sha256": "22429bc5145cc211093fadb8fc882e57d73eabea85b3a8cdba46f090d7175656",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2005-06_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2006
+    },
+    {
+      "bytes": 265519,
+      "filename": "縣市長_2009-10_臺北市.csv",
+      "rows": 2280,
+      "sha256": "3c977b82f6f2c6c7c646d7238313307d72a03b638e6ec998442351a0e8cf309e",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2009-10_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2010
+    },
+    {
+      "bytes": 375249,
+      "filename": "縣市長_2014_臺北市.csv",
+      "rows": 3192,
+      "sha256": "6b596ff963ea1393bc12b2753099e1c1469139f48a33bbb9f623dfa56b0ad24b",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2014_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2014
+    },
+    {
+      "bytes": 259952,
+      "filename": "縣市長_2018_臺北市.csv",
+      "rows": 2280,
+      "sha256": "5a8fc79e7883343fb5d66ae3489dcbd01dad5f883c2a3dee4727e4a1bc7e332a",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2018_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2018
+    },
+    {
+      "bytes": 605909,
+      "filename": "縣市長_2022_臺北市.csv",
+      "rows": 5472,
+      "sha256": "9a4479a648cd50d913ce8e6d594745505755cdcc3552abf8368f1e20bc23c352",
+      "url": "https://taiwanvotes.tw/data/csv/%E7%B8%A3%E5%B8%82%E9%95%B7_2022_%E8%87%BA%E5%8C%97%E5%B8%82.csv",
+      "year": 2022
+    }
+  ],
+  "index_sha256": "2013e3e160c56b25cf98dfe71175b9531b812b6e2f67c9d3ed9dbf0649740154",
+  "index_url": "https://taiwanvotes.tw/data/csv/index.json",
+  "schema_version": 3,
+  "source_license": {
+    "dataset": "https://data.gov.tw/dataset/13119",
+    "license": "政府資料開放授權條款－第1版",
+    "licenseUrl": "https://data.gov.tw/license",
+    "name": "選舉資料庫（含選舉區資料）",
+    "provider": "中央選舉委員會"
+  },
+  "source_modified": "2026-01-26T06:54:52Z",
+  "source_retrieved": "2026-07-04",
+  "source_sha256": "84740535b1f4a9a8fec8ebfe8f7577889837b7639cd7f5e40ef8826c6ab2f69a",
+  "source_version": "2026-07-04+sha256:84740535b1f4"
+}

@@ -95,6 +95,107 @@ class ChartTests(unittest.TestCase):
         self.assertIn("0.00 pp", svg)
         self.assertEqual(svg.count('class="volatility-bar"'), 1)
 
+    def test_mayor_svg_compares_coalition_and_official_classifications(self):
+        coalition = [
+            (2002, 64.06, 35.89, 0.05),
+            (2006, 57.94, 41.15, 0.89),
+            (2010, 55.65, 43.81, 0.54),
+            (2014, 40.82, 57.16, 2.02),
+            (2018, 40.82, 17.28, 41.90),
+            (2022, 42.29, 31.93, 25.78),
+        ]
+        official = [
+            (2002, 64.06, 35.89, 0.05),
+            (2006, 53.81, 40.89, 5.30),
+            (2010, 55.65, 43.81, 0.54),
+            (2014, 40.82, 0.00, 59.18),
+            (2018, 40.82, 17.28, 41.90),
+            (2022, 42.29, 31.93, 25.78),
+        ]
+        volatility = [
+            (2006, 6.12, 78_700),
+            (2010, 2.66, 38_100),
+            (2014, 16.13, 241_000),
+            (2018, 39.88, 563_800),
+            (2022, 16.12, 219_400),
+        ]
+
+        svg = chart_module.render_mayor_bloc_svg(
+            coalition,
+            official,
+            volatility,
+        )
+
+        for label in (
+            "2002–2022 臺北市長",
+            "聯盟口徑",
+            "官方提名口徑",
+            "泛藍",
+            "泛綠",
+            "其他候選人",
+            "最低淨移動規模",
+            "2014",
+        ):
+            self.assertIn(label, svg)
+        self.assertEqual(svg.count('class="mayor-volatility-bar"'), 5)
+        self.assertIn('role="img"', svg)
+        self.assertIn("分類差異", svg)
+
+    def test_mayor_svg_handles_an_all_zero_volatility_series(self):
+        coalition = [(2002, 60.0, 40.0, 0.0), (2006, 60.0, 40.0, 0.0)]
+
+        svg = chart_module.render_mayor_bloc_svg(
+            coalition,
+            coalition,
+            [(2006, 0.0, 0)],
+        )
+
+        self.assertIn("0.00 pp", svg)
+        self.assertEqual(svg.count('class="mayor-volatility-bar"'), 1)
+
+    def test_presidential_mayor_comparison_uses_aligned_separate_panels(self):
+        presidential = [
+            (2000, 61.69, 37.64, 0.67),
+            (2004, 56.53, 43.47, 0.00),
+            (2008, 63.03, 36.97, 0.00),
+            (2012, 60.46, 39.54, 0.00),
+            (2016, 48.04, 51.96, 0.00),
+            (2020, 46.35, 53.65, 0.00),
+            (2024, 38.08, 38.13, 23.79),
+        ]
+        mayor = [
+            (2002, 64.06, 35.89, 0.05),
+            (2006, 57.94, 41.15, 0.89),
+            (2010, 55.65, 43.81, 0.54),
+            (2014, 40.82, 57.16, 2.02),
+            (2018, 40.82, 17.28, 41.90),
+            (2022, 42.29, 31.93, 25.78),
+        ]
+
+        svg = chart_module.render_presidential_mayor_comparison_svg(
+            presidential,
+            mayor,
+        )
+
+        for label in (
+            "總統選舉 2000–2024",
+            "市長選舉 2002–2022",
+            "泛藍",
+            "泛綠",
+            "其他候選人",
+            "2000",
+            "2024",
+            "2002",
+            "2022",
+        ):
+            self.assertIn(label, svg)
+        self.assertIn('role="img"', svg)
+        self.assertIn("兩個面板使用相同的 0–70% 縱軸", svg)
+        self.assertEqual(svg.count('class="comparison-panel"'), 2)
+        for unsupported in ("Canvas", "CanvasText", "GrayText", "AccentColor", "LinkText"):
+            self.assertNotIn(unsupported, svg)
+        self.assertIn('fill="#ffffff"', svg)
+
 
 if __name__ == "__main__":
     unittest.main()

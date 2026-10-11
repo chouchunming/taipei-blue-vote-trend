@@ -10,7 +10,7 @@ from .age_structure import fit_age_model, join_age_and_votes, parse_population_a
 from .analysis import VillageResult, VoteRow
 from .artifacts import write_age_artifacts, write_artifacts
 from .mayor import MayorAnalysisBundle, analyze_mayor_rows
-from .mayor_artifacts import write_mayor_artifacts
+from .mayor_artifacts import write_mayor_artifacts, write_mayor_charts
 from .pipeline import AnalysisBundle, analyze_rows, proxy_results
 from .sources import (
     INDEX_URL,
@@ -74,12 +74,13 @@ def rebuild(root: Path, *, refresh: bool = False) -> None:
         )
         for year, filename in mayor_filenames.items()
     }
-    rebuild_mayor_from_payloads(
+    mayor_analysis = rebuild_mayor_from_payloads(
         root,
         index_payload,
         mayor_filenames,
         mayor_payloads,
     )
+    write_mayor_charts(root, mayor_analysis, analysis.city)
     population_payload = cached_payload(
         POPULATION_API_URL,
         raw / "ris-village-single-age-population-11212-page1.json",

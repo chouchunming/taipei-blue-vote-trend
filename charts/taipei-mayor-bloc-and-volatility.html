@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>2002–2022 臺北市長藍綠與選票波動</title>
+  <style>
+    body { margin: 0; padding: 24px; background: Canvas; color: CanvasText; }
+    svg { display: block; width: 100%; height: auto; max-width: 1200px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="mayor-title mayor-desc">
+  <title id="mayor-title">2002–2022 臺北市長藍綠與選票波動</title>
+  <desc id="mayor-desc">上圖以實線呈現聯盟口徑，以較細虛線呈現官方提名口徑的泛藍、泛綠及其他候選人得票率；下圖呈現聯盟口徑相鄰選舉的最低淨移動規模。2014 年兩種分類因民進黨支持柯文哲但未正式提名候選人而明顯分歧。</desc>
+  <style>
+    text { fill: #172033; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; font-size: 14px; }
+    .title { font-size: 25px; font-weight: 500; }
+    .panel-title { font-size: 18px; font-weight: 500; }
+    .subtitle, .tick, .vote-note, .note { fill: #596579; font-size: 12px; }
+    .center { text-anchor: middle; }
+    .end { text-anchor: end; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .mayor-line { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .mayor-line.coalition { stroke-width: 3.5; }
+    .mayor-line.official { stroke-width: 2; stroke-dasharray: 8 6; }
+    .mayor-line.blue, .mayor-point.blue, .legend-line.blue { stroke: #2870a7; }
+    .mayor-line.green, .mayor-point.green, .legend-line.green { stroke: #2f855a; }
+    .mayor-line.other, .mayor-point.other, .legend-line.other { stroke: #d97706; }
+    .mayor-point.blue { fill: #2870a7; }
+    .mayor-point.green { fill: #2f855a; }
+    .mayor-point.other { fill: #d97706; }
+    .mayor-point.official { fill: #ffffff; stroke-width: 2; }
+    .legend-line { stroke-width: 4; }
+    .style-solid { stroke: #475569; stroke-width: 3.5; }
+    .style-dashed { stroke: #475569; stroke-width: 2; stroke-dasharray: 8 6; }
+    .legend { font-weight: 500; }
+    .mayor-volatility-bar { fill: #7562a8; }
+    .bar-value { font-weight: 500; }
+    .annotation { fill: #7c4d13; font-size: 12px; font-weight: 500; }
+  </style>
+  <rect width="1200" height="800" fill="#ffffff" />
+  <text class="title" x="50" y="43">2002–2022 臺北市長藍綠與選票波動</text>
+  <text class="subtitle" x="50" y="70">同一批官方票數，以兩種候選人分類檢查聯盟邊界的敏感度。</text>
+  <g aria-label="顏色圖例">
+    <g transform="translate(655 45)"><line class="legend-line blue" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛藍</text></g>
+    <g transform="translate(760 45)"><line class="legend-line green" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛綠</text></g>
+    <g transform="translate(865 45)"><line class="legend-line other" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">其他候選人</text></g>
+  </g>
+  <g aria-label="線型圖例">
+    <g transform="translate(655 76)"><line class="style-solid" x1="0" y1="0" x2="30" y2="0" /><text x="39" y="5">聯盟口徑</text></g>
+    <g transform="translate(815 76)"><line class="style-dashed" x1="0" y1="0" x2="30" y2="0" /><text x="39" y="5">官方提名口徑</text></g>
+  </g>
+  <g aria-label="市長候選人類別得票率">
+    <text class="panel-title" x="50" y="125">候選人類別得票率</text>
+    <line class="grid" x1="92" y1="434.00" x2="1102" y2="434.00" /><text class="tick end" x="78" y="439.00">0%</text><line class="grid" x1="92" y1="394.00" x2="1102" y2="394.00" /><text class="tick end" x="78" y="399.00">10%</text><line class="grid" x1="92" y1="354.00" x2="1102" y2="354.00" /><text class="tick end" x="78" y="359.00">20%</text><line class="grid" x1="92" y1="314.00" x2="1102" y2="314.00" /><text class="tick end" x="78" y="319.00">30%</text><line class="grid" x1="92" y1="274.00" x2="1102" y2="274.00" /><text class="tick end" x="78" y="279.00">40%</text><line class="grid" x1="92" y1="234.00" x2="1102" y2="234.00" /><text class="tick end" x="78" y="239.00">50%</text><line class="grid" x1="92" y1="194.00" x2="1102" y2="194.00" /><text class="tick end" x="78" y="199.00">60%</text><line class="grid" x1="92" y1="154.00" x2="1102" y2="154.00" /><text class="tick end" x="78" y="159.00">70%</text><text class="tick center" x="92.00" y="462">2002</text><text class="tick center" x="294.00" y="462">2006</text><text class="tick center" x="496.00" y="462">2010</text><text class="tick center" x="698.00" y="462">2014</text><text class="tick center" x="900.00" y="462">2018</text><text class="tick center" x="1102.00" y="462">2022</text>
+    <polyline class="mayor-line coalition blue" points="92.00,177.57 294.00,202.18 496.00,211.40 698.00,270.70 900.00,270.73 1102.00,264.83" /><circle class="mayor-point coalition blue" cx="92.00" cy="177.57" r="4.5"><title>2002 聯盟口徑 泛藍 64.11%</title></circle><circle class="mayor-point coalition blue" cx="294.00" cy="202.18" r="4.5"><title>2006 聯盟口徑 泛藍 57.96%</title></circle><circle class="mayor-point coalition blue" cx="496.00" cy="211.40" r="4.5"><title>2010 聯盟口徑 泛藍 55.65%</title></circle><circle class="mayor-point coalition blue" cx="698.00" cy="270.70" r="4.5"><title>2014 聯盟口徑 泛藍 40.82%</title></circle><circle class="mayor-point coalition blue" cx="900.00" cy="270.73" r="4.5"><title>2018 聯盟口徑 泛藍 40.82%</title></circle><circle class="mayor-point coalition blue" cx="1102.00" cy="264.83" r="4.5"><title>2022 聯盟口徑 泛藍 42.29%</title></circle><polyline class="mayor-line official blue" points="92.00,177.57 294.00,218.75 496.00,211.40 698.00,270.70 900.00,270.73 1102.00,264.83" /><circle class="mayor-point official blue" cx="92.00" cy="177.57" r="3.2"><title>2002 官方提名口徑 泛藍 64.11%</title></circle><circle class="mayor-point official blue" cx="294.00" cy="218.75" r="3.2"><title>2006 官方提名口徑 泛藍 53.81%</title></circle><circle class="mayor-point official blue" cx="496.00" cy="211.40" r="3.2"><title>2010 官方提名口徑 泛藍 55.65%</title></circle><circle class="mayor-point official blue" cx="698.00" cy="270.70" r="3.2"><title>2014 官方提名口徑 泛藍 40.82%</title></circle><circle class="mayor-point official blue" cx="900.00" cy="270.73" r="3.2"><title>2018 官方提名口徑 泛藍 40.82%</title></circle><circle class="mayor-point official blue" cx="1102.00" cy="264.83" r="3.2"><title>2022 官方提名口徑 泛藍 42.29%</title></circle><polyline class="mayor-line coalition green" points="92.00,290.43 294.00,269.40 496.00,258.76 698.00,205.36 900.00,364.87 1102.00,306.28" /><circle class="mayor-point coalition green" cx="92.00" cy="290.43" r="4.5"><title>2002 聯盟口徑 泛綠 35.89%</title></circle><circle class="mayor-point coalition green" cx="294.00" cy="269.40" r="4.5"><title>2006 聯盟口徑 泛綠 41.15%</title></circle><circle class="mayor-point coalition green" cx="496.00" cy="258.76" r="4.5"><title>2010 聯盟口徑 泛綠 43.81%</title></circle><circle class="mayor-point coalition green" cx="698.00" cy="205.36" r="4.5"><title>2014 聯盟口徑 泛綠 57.16%</title></circle><circle class="mayor-point coalition green" cx="900.00" cy="364.87" r="4.5"><title>2018 聯盟口徑 泛綠 17.28%</title></circle><circle class="mayor-point coalition green" cx="1102.00" cy="306.28" r="4.5"><title>2022 聯盟口徑 泛綠 31.93%</title></circle><polyline class="mayor-line official green" points="92.00,290.43 294.00,270.44 496.00,258.76 698.00,434.00 900.00,364.87 1102.00,306.28" /><circle class="mayor-point official green" cx="92.00" cy="290.43" r="3.2"><title>2002 官方提名口徑 泛綠 35.89%</title></circle><circle class="mayor-point official green" cx="294.00" cy="270.44" r="3.2"><title>2006 官方提名口徑 泛綠 40.89%</title></circle><circle class="mayor-point official green" cx="496.00" cy="258.76" r="3.2"><title>2010 官方提名口徑 泛綠 43.81%</title></circle><circle class="mayor-point official green" cx="698.00" cy="434.00" r="3.2"><title>2014 官方提名口徑 泛綠 0.00%</title></circle><circle class="mayor-point official green" cx="900.00" cy="364.87" r="3.2"><title>2018 官方提名口徑 泛綠 17.28%</title></circle><circle class="mayor-point official green" cx="1102.00" cy="306.28" r="3.2"><title>2022 官方提名口徑 泛綠 31.93%</title></circle><polyline class="mayor-line coalition other" points="92.00,434.00 294.00,430.43 496.00,431.84 698.00,425.93 900.00,266.39 1102.00,330.89" /><circle class="mayor-point coalition other" cx="92.00" cy="434.00" r="4.5"><title>2002 聯盟口徑 其他候選人 0.00%</title></circle><circle class="mayor-point coalition other" cx="294.00" cy="430.43" r="4.5"><title>2006 聯盟口徑 其他候選人 0.89%</title></circle><circle class="mayor-point coalition other" cx="496.00" cy="431.84" r="4.5"><title>2010 聯盟口徑 其他候選人 0.54%</title></circle><circle class="mayor-point coalition other" cx="698.00" cy="425.93" r="4.5"><title>2014 聯盟口徑 其他候選人 2.02%</title></circle><circle class="mayor-point coalition other" cx="900.00" cy="266.39" r="4.5"><title>2018 聯盟口徑 其他候選人 41.90%</title></circle><circle class="mayor-point coalition other" cx="1102.00" cy="330.89" r="4.5"><title>2022 聯盟口徑 其他候選人 25.78%</title></circle><polyline class="mayor-line official other" points="92.00,434.00 294.00,412.81 496.00,431.84 698.00,197.30 900.00,266.39 1102.00,330.89" /><circle class="mayor-point official other" cx="92.00" cy="434.00" r="3.2"><title>2002 官方提名口徑 其他候選人 0.00%</title></circle><circle class="mayor-point official other" cx="294.00" cy="412.81" r="3.2"><title>2006 官方提名口徑 其他候選人 5.30%</title></circle><circle class="mayor-point official other" cx="496.00" cy="431.84" r="3.2"><title>2010 官方提名口徑 其他候選人 0.54%</title></circle><circle class="mayor-point official other" cx="698.00" cy="197.30" r="3.2"><title>2014 官方提名口徑 其他候選人 59.18%</title></circle><circle class="mayor-point official other" cx="900.00" cy="266.39" r="3.2"><title>2018 官方提名口徑 其他候選人 41.90%</title></circle><circle class="mayor-point official other" cx="1102.00" cy="330.89" r="3.2"><title>2022 官方提名口徑 其他候選人 25.78%</title></circle>
+    <text class="annotation center" x="698.00" y="485">2014 分類差異：柯文哲列入聯盟泛綠，官方提名口徑列為其他</text>
+  </g>
+  <g aria-label="聯盟口徑最低淨移動規模">
+    <text class="panel-title" x="50" y="525">聯盟口徑：相對前一屆的最低淨移動規模</text>
+    <line class="grid" x1="125" y1="680" x2="1070" y2="680" />
+    <rect class="mayor-volatility-bar" x="173.50" y="663.66" width="92.00" height="16.34" rx="5"><title>2006 6.15 pp／79,127 票等值</title></rect><text class="bar-value center" x="219.50" y="654.66">6.15 pp</text><text class="tick center" x="219.50" y="703">2006</text><text class="vote-note center" x="219.50" y="722">79,127 票等值</text><rect class="mayor-volatility-bar" x="362.50" y="672.94" width="92.00" height="7.06" rx="5"><title>2010 2.66 pp／38,129 票等值</title></rect><text class="bar-value center" x="408.50" y="663.94">2.66 pp</text><text class="tick center" x="408.50" y="703">2010</text><text class="vote-note center" x="408.50" y="722">38,129 票等值</text><rect class="mayor-volatility-bar" x="551.50" y="640.62" width="92.00" height="39.38" rx="5"><title>2014 14.83 pp／221,495 票等值</title></rect><text class="bar-value center" x="597.50" y="631.62">14.83 pp</text><text class="tick center" x="597.50" y="703">2014</text><text class="vote-note center" x="597.50" y="722">221,495 票等值</text><rect class="mayor-volatility-bar" x="740.50" y="574.07" width="92.00" height="105.93" rx="5"><title>2018 39.88 pp／563,918 票等值</title></rect><text class="bar-value center" x="786.50" y="565.07">39.88 pp</text><text class="tick center" x="786.50" y="703">2018</text><text class="vote-note center" x="786.50" y="722">563,918 票等值</text><rect class="mayor-volatility-bar" x="929.50" y="637.17" width="92.00" height="42.83" rx="5"><title>2022 16.13 pp／219,455 票等值</title></rect><text class="bar-value center" x="975.50" y="628.17">16.13 pp</text><text class="tick center" x="975.50" y="703">2022</text><text class="vote-note center" x="975.50" y="722">219,455 票等值</text>
+  </g>
+  <text class="note" x="50" y="778">「其他候選人」不是所有中間選民；最低淨移動規模是三類聚合得票率變化的一半，也包含投票率與選民結構變化。</text>
+</svg>
+</body>
+</html>

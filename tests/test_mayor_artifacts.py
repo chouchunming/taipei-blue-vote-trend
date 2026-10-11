@@ -9,7 +9,7 @@ from taipei_blue_vote.mayor import (
     MayorAnalysisBundle,
     analyze_mayor_rows,
 )
-from taipei_blue_vote.mayor_artifacts import write_mayor_artifacts
+from taipei_blue_vote.mayor_artifacts import write_mayor_artifacts, write_mayor_charts
 from taipei_blue_vote.sources import MAYOR_YEARS, MayorVoteRow
 
 
@@ -109,6 +109,52 @@ class MayorArtifactTests(unittest.TestCase):
                 "green_share,green_vote_change_from_2002,"
                 "share_point_change_from_2002\n",
             )
+
+    def test_chart_writer_creates_mayor_and_comparison_svg_and_html(self):
+        analysis = analyze_mayor_rows(_six_year_rows())
+        presidential_city = [
+            _PresidentialResult(year, 100, 55, 40, 5)
+            for year in (2000, 2004, 2008, 2012, 2016, 2020, 2024)
+        ]
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_mayor_charts(root, analysis, presidential_city)
+
+            charts = root / "charts"
+            expected = {
+                "taipei-mayor-bloc-and-volatility.svg",
+                "taipei-mayor-bloc-and-volatility.html",
+                "taipei-presidential-mayor-comparison.svg",
+                "taipei-presidential-mayor-comparison.html",
+            }
+            self.assertEqual({path.name for path in charts.iterdir()}, expected)
+            for filename in expected:
+                content = (charts / filename).read_text()
+                self.assertIn("臺北", content)
+                if filename.endswith(".html"):
+                    self.assertTrue(content.startswith("<!doctype html>"))
+
+
+class _PresidentialResult:
+    def __init__(self, year, valid_votes, blue_votes, green_votes, other_votes):
+        self.year = year
+        self.valid_votes = valid_votes
+        self.blue_votes = blue_votes
+        self.green_votes = green_votes
+        self.other_votes = other_votes
+
+    @property
+    def blue_share(self):
+        return self.blue_votes / self.valid_votes * 100
+
+    @property
+    def green_share(self):
+        return self.green_votes / self.valid_votes * 100
+
+    @property
+    def other_share(self):
+        return self.other_votes / self.valid_votes * 100
 
 
 def _six_year_rows():

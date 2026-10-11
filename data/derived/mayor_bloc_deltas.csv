@@ -1,0 +1,11 @@
+classification,year,blue_share_point_delta,blue_vote_delta,green_share_point_delta,green_vote_delta,other_share_point_delta,other_vote_delta
+coalition,2006,-6.15,-127736,5.26,40430,0.89,11482
+coalition,2010,-2.31,52499,2.66,98888,-0.35,-3740
+coalition,2014,-14.83,-187933,13.35,225854,1.48,22389
+coalition,2018,-0.01,-32836,-39.88,-609641,39.88,562301
+coalition,2022,1.48,-1506,14.65,190216,-16.13,-241629
+official_nomination,2006,-10.30,-181017,5.00,37058,5.30,68135
+official_nomination,2010,1.84,105780,2.92,102260,-4.76,-60393
+official_nomination,2014,-14.83,-187933,-43.81,-628129,58.64,876372
+official_nomination,2018,-0.01,-32836,17.28,244342,-17.27,-291682
+official_nomination,2022,1.48,-1506,14.65,190216,-16.13,-241629

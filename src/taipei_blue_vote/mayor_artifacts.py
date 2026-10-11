@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Sequence
 
+from .analysis import ElectionResult
+from .chart import (
+    render_html,
+    render_mayor_bloc_svg,
+    render_presidential_mayor_comparison_svg,
+)
 from .mayor import MayorAnalysisBundle, MayorElectionResult
 from .outputs import write_csv, write_json
 
@@ -144,6 +150,55 @@ def write_mayor_artifacts(
         bloc="green",
     )
     write_json(derived / "mayor_source_manifest.json", source_manifest)
+
+
+def write_mayor_charts(
+    root: Path,
+    analysis: MayorAnalysisBundle,
+    presidential_city: Sequence[ElectionResult],
+) -> None:
+    """Write mayor and cross-election comparison charts."""
+    charts = root / "charts"
+    charts.mkdir(parents=True, exist_ok=True)
+
+    def bloc_rows(rows):
+        return [
+            (row.year, row.blue_share, row.green_share, row.other_share)
+            for row in rows
+        ]
+
+    coalition_rows = bloc_rows(analysis.coalition.city)
+    official_rows = bloc_rows(analysis.official_nomination.city)
+    volatility_rows = [
+        (row.year, row.volatility_pp, row.vote_equivalent)
+        for row in analysis.coalition.volatility
+    ]
+    mayor_svg = render_mayor_bloc_svg(
+        coalition_rows,
+        official_rows,
+        volatility_rows,
+    )
+    (charts / "taipei-mayor-bloc-and-volatility.svg").write_text(
+        mayor_svg,
+        encoding="utf-8",
+    )
+    (charts / "taipei-mayor-bloc-and-volatility.html").write_text(
+        render_html(mayor_svg, title="2002–2022 臺北市長藍綠與選票波動"),
+        encoding="utf-8",
+    )
+
+    comparison_svg = render_presidential_mayor_comparison_svg(
+        bloc_rows(presidential_city),
+        coalition_rows,
+    )
+    (charts / "taipei-presidential-mayor-comparison.svg").write_text(
+        comparison_svg,
+        encoding="utf-8",
+    )
+    (charts / "taipei-presidential-mayor-comparison.html").write_text(
+        render_html(comparison_svg, title="臺北市總統與市長選舉得票結構比較"),
+        encoding="utf-8",
+    )
 
 
 def _write_cohort(

@@ -71,7 +71,7 @@ def parse_mayor_vote_csv(payload: bytes) -> tuple[MayorVoteRow, ...]:
         try:
             rows.append(
                 MayorVoteRow(
-                    year=int(source["屆期"]),
+                    year=_mayor_election_year(source["屆期"]),
                     district=source["鄉鎮市區"].strip(),
                     village=source["村里"].strip(),
                     candidate=source["候選人"].strip(),
@@ -82,6 +82,17 @@ def parse_mayor_vote_csv(payload: bytes) -> tuple[MayorVoteRow, ...]:
         except (AttributeError, TypeError, ValueError) as error:
             raise ValueError(f"invalid mayor vote row: {source}") from error
     return tuple(rows)
+
+
+def _mayor_election_year(term: str) -> int:
+    """Normalize TaiwanVotes terms such as ``2001/02`` to election year 2002."""
+    value = term.strip()
+    if "/" not in value:
+        return int(value)
+    start, end = value.split("/", 1)
+    if len(start) != 4 or len(end) != 2:
+        raise ValueError(f"invalid mayor election term: {term}")
+    return int(start[:2] + end)
 
 
 def select_taipei_presidential_files(index_payload: bytes) -> dict[int, str]:

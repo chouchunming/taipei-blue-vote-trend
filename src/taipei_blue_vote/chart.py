@@ -13,6 +13,12 @@ DeltaRow = tuple[int, float, int]
 BlocShareRow = tuple[int, float, float, float]
 VolatilityRow = tuple[int, float, int]
 
+_BLOC_SERIES = (
+    ("泛藍", 1, "blue"),
+    ("泛綠", 2, "green"),
+    ("其他候選人", 3, "other"),
+)
+
 
 def _signed(value: float | int, digits: int = 0) -> str:
     sign = "+" if value > 0 else "−" if value < 0 else ""
@@ -232,6 +238,261 @@ def render_bloc_svg(
     {''.join(bars)}
   </g>
   <text class="note" x="50" y="700">「其他候選人」是可觀察選票類別，不是所有中間選民；波動是聚合淨變化，也可能包含投票率與選民結構變化。</text>
+</svg>
+'''
+
+
+def render_mayor_bloc_svg(
+    coalition_rows: Sequence[BlocShareRow],
+    official_rows: Sequence[BlocShareRow],
+    volatility_rows: Sequence[VolatilityRow],
+) -> str:
+    """Render mayor bloc shares under two classifications plus volatility."""
+    if len(coalition_rows) < 2 or len(official_rows) != len(coalition_rows):
+        raise ValueError("mayor chart requires matching coalition and official rows")
+    if [row[0] for row in coalition_rows] != [row[0] for row in official_rows]:
+        raise ValueError("mayor chart classifications must contain the same years")
+    if len(volatility_rows) != len(coalition_rows) - 1:
+        raise ValueError("mayor chart requires one volatility row per transition")
+
+    plot_left, plot_top, plot_width, plot_height = 92.0, 154.0, 1010.0, 280.0
+    share_max = 70.0
+    step = plot_width / (len(coalition_rows) - 1)
+
+    def x_position(index: int) -> float:
+        return plot_left + index * step
+
+    def y_position(value: float) -> float:
+        return plot_top + plot_height - value / share_max * plot_height
+
+    grid = []
+    for value in (0, 10, 20, 30, 40, 50, 60, 70):
+        y = y_position(value)
+        grid.extend(
+            (
+                f'<line class="grid" x1="{plot_left:g}" y1="{y:.2f}" x2="{plot_left + plot_width:g}" y2="{y:.2f}" />',
+                f'<text class="tick end" x="{plot_left - 14:g}" y="{y + 5:.2f}">{value}%</text>',
+            )
+        )
+    for index, row in enumerate(coalition_rows):
+        grid.append(
+            f'<text class="tick center" x="{x_position(index):.2f}" y="{plot_top + plot_height + 28:g}">{row[0]}</text>'
+        )
+
+    lines = []
+    for label, value_index, color_class in _BLOC_SERIES:
+        coalition_points = " ".join(
+            f"{x_position(index):.2f},{y_position(row[value_index]):.2f}"
+            for index, row in enumerate(coalition_rows)
+        )
+        official_points = " ".join(
+            f"{x_position(index):.2f},{y_position(row[value_index]):.2f}"
+            for index, row in enumerate(official_rows)
+        )
+        coalition_dots = "".join(
+            f'<circle class="mayor-point coalition {color_class}" cx="{x_position(index):.2f}" '
+            f'cy="{y_position(row[value_index]):.2f}" r="4.5"><title>{row[0]} '
+            f'聯盟口徑 {label} {row[value_index]:.2f}%</title></circle>'
+            for index, row in enumerate(coalition_rows)
+        )
+        official_dots = "".join(
+            f'<circle class="mayor-point official {color_class}" cx="{x_position(index):.2f}" '
+            f'cy="{y_position(row[value_index]):.2f}" r="3.2"><title>{row[0]} '
+            f'官方提名口徑 {label} {row[value_index]:.2f}%</title></circle>'
+            for index, row in enumerate(official_rows)
+        )
+        lines.extend(
+            (
+                f'<polyline class="mayor-line coalition {color_class}" points="{coalition_points}" />{coalition_dots}',
+                f'<polyline class="mayor-line official {color_class}" points="{official_points}" />{official_dots}',
+            )
+        )
+
+    volatility_left, volatility_top = 125.0, 555.0
+    volatility_width, volatility_height = 945.0, 125.0
+    volatility_max = max(1.0, max(row[1] for row in volatility_rows) * 1.18)
+    slot = volatility_width / len(volatility_rows)
+    bar_width = min(92.0, slot * 0.52)
+    bars = []
+    for index, (year, value, vote_equivalent) in enumerate(volatility_rows):
+        x = volatility_left + index * slot + (slot - bar_width) / 2
+        height = value / volatility_max * volatility_height
+        y = volatility_top + volatility_height - height
+        bars.extend(
+            (
+                f'<rect class="mayor-volatility-bar" x="{x:.2f}" y="{y:.2f}" width="{bar_width:.2f}" height="{height:.2f}" rx="5"><title>{year} {value:.2f} pp／{vote_equivalent:,} 票等值</title></rect>',
+                f'<text class="bar-value center" x="{x + bar_width / 2:.2f}" y="{y - 9:.2f}">{value:.2f} pp</text>',
+                f'<text class="tick center" x="{x + bar_width / 2:.2f}" y="{volatility_top + volatility_height + 23:g}">{year}</text>',
+                f'<text class="vote-note center" x="{x + bar_width / 2:.2f}" y="{volatility_top + volatility_height + 42:g}">{vote_equivalent:,} 票等值</text>',
+            )
+        )
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="mayor-title mayor-desc">
+  <title id="mayor-title">2002–2022 臺北市長藍綠與選票波動</title>
+  <desc id="mayor-desc">上圖以實線呈現聯盟口徑，以較細虛線呈現官方提名口徑的泛藍、泛綠及其他候選人得票率；下圖呈現聯盟口徑相鄰選舉的最低淨移動規模。2014 年兩種分類因民進黨支持柯文哲但未正式提名候選人而明顯分歧。</desc>
+  <style>
+    text {{ fill: #172033; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; font-size: 14px; }}
+    .title {{ font-size: 25px; font-weight: 500; }}
+    .panel-title {{ font-size: 18px; font-weight: 500; }}
+    .subtitle, .tick, .vote-note, .note {{ fill: #596579; font-size: 12px; }}
+    .center {{ text-anchor: middle; }}
+    .end {{ text-anchor: end; }}
+    .grid {{ stroke: #e2e8f0; stroke-width: 1; }}
+    .mayor-line {{ fill: none; stroke-linejoin: round; stroke-linecap: round; }}
+    .mayor-line.coalition {{ stroke-width: 3.5; }}
+    .mayor-line.official {{ stroke-width: 2; stroke-dasharray: 8 6; }}
+    .mayor-line.blue, .mayor-point.blue, .legend-line.blue {{ stroke: #2870a7; }}
+    .mayor-line.green, .mayor-point.green, .legend-line.green {{ stroke: #2f855a; }}
+    .mayor-line.other, .mayor-point.other, .legend-line.other {{ stroke: #d97706; }}
+    .mayor-point.blue {{ fill: #2870a7; }}
+    .mayor-point.green {{ fill: #2f855a; }}
+    .mayor-point.other {{ fill: #d97706; }}
+    .mayor-point.official {{ fill: #ffffff; stroke-width: 2; }}
+    .legend-line {{ stroke-width: 4; }}
+    .style-solid {{ stroke: #475569; stroke-width: 3.5; }}
+    .style-dashed {{ stroke: #475569; stroke-width: 2; stroke-dasharray: 8 6; }}
+    .legend {{ font-weight: 500; }}
+    .mayor-volatility-bar {{ fill: #7562a8; }}
+    .bar-value {{ font-weight: 500; }}
+    .annotation {{ fill: #7c4d13; font-size: 12px; font-weight: 500; }}
+  </style>
+  <rect width="1200" height="800" fill="#ffffff" />
+  <text class="title" x="50" y="43">2002–2022 臺北市長藍綠與選票波動</text>
+  <text class="subtitle" x="50" y="70">同一批官方票數，以兩種候選人分類檢查聯盟邊界的敏感度。</text>
+  <g aria-label="顏色圖例">
+    <g transform="translate(655 45)"><line class="legend-line blue" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛藍</text></g>
+    <g transform="translate(760 45)"><line class="legend-line green" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛綠</text></g>
+    <g transform="translate(865 45)"><line class="legend-line other" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">其他候選人</text></g>
+  </g>
+  <g aria-label="線型圖例">
+    <g transform="translate(655 76)"><line class="style-solid" x1="0" y1="0" x2="30" y2="0" /><text x="39" y="5">聯盟口徑</text></g>
+    <g transform="translate(815 76)"><line class="style-dashed" x1="0" y1="0" x2="30" y2="0" /><text x="39" y="5">官方提名口徑</text></g>
+  </g>
+  <g aria-label="市長候選人類別得票率">
+    <text class="panel-title" x="50" y="125">候選人類別得票率</text>
+    {''.join(grid)}
+    {''.join(lines)}
+    <text class="annotation center" x="{x_position(3):.2f}" y="{plot_top + plot_height + 51:g}">2014 分類差異：柯文哲列入聯盟泛綠，官方提名口徑列為其他</text>
+  </g>
+  <g aria-label="聯盟口徑最低淨移動規模">
+    <text class="panel-title" x="50" y="525">聯盟口徑：相對前一屆的最低淨移動規模</text>
+    <line class="grid" x1="{volatility_left:g}" y1="{volatility_top + volatility_height:g}" x2="{volatility_left + volatility_width:g}" y2="{volatility_top + volatility_height:g}" />
+    {''.join(bars)}
+  </g>
+  <text class="note" x="50" y="778">「其他候選人」不是所有中間選民；最低淨移動規模是三類聚合得票率變化的一半，也包含投票率與選民結構變化。</text>
+</svg>
+'''
+
+
+def render_presidential_mayor_comparison_svg(
+    presidential_rows: Sequence[BlocShareRow],
+    mayor_rows: Sequence[BlocShareRow],
+) -> str:
+    """Render presidential and mayor bloc trends as shared-scale panels."""
+    if len(presidential_rows) < 2 or len(mayor_rows) < 2:
+        raise ValueError("comparison chart requires at least two elections per panel")
+
+    plot_top, plot_height, plot_width = 145.0, 350.0, 455.0
+    share_max = 70.0
+
+    def render_panel(
+        rows: Sequence[BlocShareRow],
+        *,
+        left: float,
+        title: str,
+        accessible_label: str,
+    ) -> str:
+        step = plot_width / (len(rows) - 1)
+
+        def x_position(index: int) -> float:
+            return left + index * step
+
+        def y_position(value: float) -> float:
+            return plot_top + plot_height - value / share_max * plot_height
+
+        parts = [
+            f'<text class="panel-title" x="{left:g}" y="112">{escape(title)}</text>',
+        ]
+        for value in (0, 10, 20, 30, 40, 50, 60, 70):
+            y = y_position(value)
+            parts.append(
+                f'<line class="grid" x1="{left:g}" y1="{y:.2f}" x2="{left + plot_width:g}" y2="{y:.2f}" />'
+            )
+            if left < 100:
+                parts.append(
+                    f'<text class="tick end" x="{left - 12:g}" y="{y + 5:.2f}">{value}%</text>'
+                )
+        for index, row in enumerate(rows):
+            parts.append(
+                f'<text class="tick center" x="{x_position(index):.2f}" y="{plot_top + plot_height + 27:g}">{row[0]}</text>'
+            )
+        for label, value_index, color_class in _BLOC_SERIES:
+            points = " ".join(
+                f"{x_position(index):.2f},{y_position(row[value_index]):.2f}"
+                for index, row in enumerate(rows)
+            )
+            parts.append(
+                f'<polyline class="comparison-line {color_class}" points="{points}" />'
+            )
+            parts.extend(
+                f'<circle class="comparison-point {color_class}" cx="{x_position(index):.2f}" cy="{y_position(row[value_index]):.2f}" r="4.5"><title>{row[0]} {label} {row[value_index]:.2f}%</title></circle>'
+                for index, row in enumerate(rows)
+            )
+        last = rows[-1]
+        parts.append(
+            f'<text class="last-values" x="{left:g}" y="{plot_top + plot_height + 61:g}">{last[0]}：泛藍 {last[1]:.2f}%　泛綠 {last[2]:.2f}%　其他 {last[3]:.2f}%</text>'
+        )
+        return (
+            f'<g class="comparison-panel" aria-label="{escape(accessible_label)}">'
+            + "".join(parts)
+            + "</g>"
+        )
+
+    presidential_panel = render_panel(
+        presidential_rows,
+        left=70.0,
+        title="總統選舉 2000–2024",
+        accessible_label="總統選舉候選人類別得票率",
+    )
+    mayor_panel = render_panel(
+        mayor_rows,
+        left=675.0,
+        title="市長選舉 2002–2022",
+        accessible_label="市長選舉聯盟口徑候選人類別得票率",
+    )
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="comparison-title comparison-desc">
+  <title id="comparison-title">臺北市總統與市長選舉候選人類別得票率比較</title>
+  <desc id="comparison-desc">總統選舉 2000 至 2024 年與市長選舉 2002 至 2022 年分成兩個不相連的面板；兩個面板使用相同的 0–70% 縱軸，並以相同顏色表示泛藍、泛綠和其他候選人。市長選舉採聯盟口徑。</desc>
+  <style>
+    text {{ fill: #172033; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; font-size: 14px; }}
+    .title {{ font-size: 25px; font-weight: 500; }}
+    .panel-title {{ font-size: 18px; font-weight: 500; }}
+    .subtitle, .tick, .note {{ fill: #596579; font-size: 12px; }}
+    .center {{ text-anchor: middle; }}
+    .end {{ text-anchor: end; }}
+    .grid {{ stroke: #e2e8f0; stroke-width: 1; }}
+    .comparison-line {{ fill: none; stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; }}
+    .comparison-line.blue, .comparison-point.blue, .legend-line.blue {{ stroke: #2870a7; }}
+    .comparison-line.green, .comparison-point.green, .legend-line.green {{ stroke: #2f855a; }}
+    .comparison-line.other, .comparison-point.other, .legend-line.other {{ stroke: #d97706; }}
+    .comparison-point.blue {{ fill: #2870a7; }}
+    .comparison-point.green {{ fill: #2f855a; }}
+    .comparison-point.other {{ fill: #d97706; }}
+    .legend-line {{ stroke-width: 4; }}
+    .legend, .last-values {{ font-weight: 500; }}
+    .last-values {{ font-size: 12px; }}
+  </style>
+  <rect width="1200" height="620" fill="#ffffff" />
+  <text class="title" x="50" y="43">臺北市總統與市長選舉得票結構比較</text>
+  <text class="subtitle" x="50" y="70">兩種選舉分開連線；市長選舉採聯盟口徑，兩圖共用 0–70% 比例尺。</text>
+  <g aria-label="候選人類別圖例">
+    <g transform="translate(745 46)"><line class="legend-line blue" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛藍</text></g>
+    <g transform="translate(850 46)"><line class="legend-line green" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">泛綠</text></g>
+    <g transform="translate(955 46)"><line class="legend-line other" x1="0" y1="0" x2="24" y2="0" /><text class="legend" x="32" y="5">其他候選人</text></g>
+  </g>
+  {presidential_panel}
+  {mayor_panel}
+  <text class="note" x="50" y="596">線段只連接同一選舉類型的相鄰年份；「其他候選人」是選票分類，不等同所有中間選民。</text>
 </svg>
 '''
 

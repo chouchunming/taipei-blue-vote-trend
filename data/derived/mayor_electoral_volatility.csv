@@ -1,0 +1,11 @@
+classification,year,volatility_pp,vote_equivalent,valid_votes
+coalition,2006,6.1525,79127,1286089
+coalition,2010,2.6594,38129,1433736
+coalition,2014,14.8252,221495,1494046
+coalition,2018,39.8847,563918,1413870
+coalition,2022,16.1251,219455,1360951
+official_nomination,2006,10.2954,132408,1286089
+official_nomination,2010,4.7578,68214,1433736
+official_nomination,2014,58.6358,876046,1494046
+official_nomination,2018,17.2818,244342,1413870
+official_nomination,2022,16.1251,219455,1360951

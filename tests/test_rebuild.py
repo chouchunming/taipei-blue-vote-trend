@@ -268,8 +268,12 @@ class RebuildTests(unittest.TestCase):
             "taipei_blue_vote.rebuild.rebuild_mayor_from_payloads"
         ) as mayor_rebuild, patch(
             "taipei_blue_vote.rebuild.rebuild_age_from_payload"
-        ):
+        ), patch(
+            "taipei_blue_vote.rebuild.write_mayor_charts"
+        ) as mayor_charts:
             presidential_rebuild.return_value.villages = ()
+            presidential_rebuild.return_value.city = ()
+            mayor_rebuild.return_value = object()
             root = Path(directory)
             rebuild(root, refresh=True)
 
@@ -278,6 +282,11 @@ class RebuildTests(unittest.TestCase):
                 index_payload,
                 mayor,
                 {year: filename.encode() for year, filename in mayor.items()},
+            )
+            mayor_charts.assert_called_once_with(
+                root,
+                mayor_rebuild.return_value,
+                presidential_rebuild.return_value.city,
             )
 
 
