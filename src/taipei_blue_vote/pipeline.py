@@ -7,10 +7,14 @@ from typing import Iterable
 
 from .analysis import (
     VoteRow,
+    BlocDelta,
     VillageKey,
     VillageResult,
     ElectionResult,
+    VolatilityResult,
     aggregate_villages,
+    bloc_deltas,
+    electoral_volatility,
     election_deltas,
     select_fixed_cohort,
     summarize,
@@ -24,6 +28,11 @@ class AnalysisBundle:
     cohort_keys: frozenset[VillageKey]
     cohort: tuple[ElectionResult, ...]
     deltas: tuple[tuple[int, float, int], ...]
+    green_cohort_keys: frozenset[VillageKey]
+    green_cohort: tuple[ElectionResult, ...]
+    green_deltas: tuple[tuple[int, float, int], ...]
+    bloc_deltas: tuple[BlocDelta, ...]
+    volatility: tuple[VolatilityResult, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +55,25 @@ def analyze_rows(rows: Iterable[VoteRow]) -> AnalysisBundle:
     deltas = tuple(
         election_deltas([(row.year, row.blue_share, row.blue_votes) for row in city])
     )
-    return AnalysisBundle(villages, city, cohort_keys, cohort, deltas)
+    green_cohort_keys = select_fixed_cohort(villages, threshold=45.0, bloc="green")
+    green_cohort = summarize(villages, green_cohort_keys)
+    green_deltas = tuple(
+        election_deltas([(row.year, row.green_share, row.green_votes) for row in city])
+    )
+    all_bloc_deltas = bloc_deltas(city)
+    volatility = electoral_volatility(city)
+    return AnalysisBundle(
+        villages,
+        city,
+        cohort_keys,
+        cohort,
+        deltas,
+        green_cohort_keys,
+        green_cohort,
+        green_deltas,
+        all_bloc_deltas,
+        volatility,
+    )
 
 
 def proxy_results(

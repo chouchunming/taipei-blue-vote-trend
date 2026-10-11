@@ -3,7 +3,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from taipei_blue_vote.analysis import BLUE_CANDIDATES, ELECTION_YEARS, VillageResult
+from taipei_blue_vote.analysis import (
+    BLUE_CANDIDATES,
+    ELECTION_YEARS,
+    GREEN_CANDIDATES,
+    VillageResult,
+)
 from taipei_blue_vote.rebuild import (
     PROXY_SPECS,
     rebuild_age_from_payload,
@@ -30,7 +35,7 @@ class RebuildTests(unittest.TestCase):
             ],
         }
         payloads = {year: _csv_payload(year) for year in ELECTION_YEARS}
-        expected = {year: (100, 70) for year in ELECTION_YEARS}
+        expected = {year: (100, 70, 30, 0) for year in ELECTION_YEARS}
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -96,7 +101,7 @@ def _csv_payload(year):
         f"{year},信義區,景新里,{candidate},{votes}\n"
         for candidate, votes in zip(candidates, blue_votes)
     ]
-    rows.append(f"{year},信義區,景新里,其他,30\n")
+    rows.append(f"{year},信義區,景新里,{next(iter(GREEN_CANDIDATES[year]))},30\n")
     return (header + "".join(rows)).encode()
 
 
