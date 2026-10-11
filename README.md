@@ -1,10 +1,33 @@
 # Taipei Blue Vote Trend
 
-台北市 2000–2024 年總統選舉藍綠基本盤、其他候選人票與選票波動趨勢：可重現資料、分析程式、眷村所在地代理比較、青年補票估計與圖表。
+台北市 2000–2024 年總統選舉與 2002–2022 年市長選舉的藍綠基本盤、其他候選人票與選票波動趨勢：可重現資料、分析程式、眷村所在地代理比較、青年補票估計與圖表。兩種選舉各自成為獨立時間序列，不把市長候選人效果直接當成總統政黨盤。
+
+## 台北市長選舉補充
+
+![臺北市長藍綠與選票波動](charts/taipei-mayor-bloc-and-volatility.svg)
+
+主分析採「選舉聯盟口徑」：2014 年獲民進黨支持的柯文哲列為綠方聯盟，2018 年民進黨另提姚文智後，柯文哲列入其他；2006 年宋楚瑜列藍、周玉蔻列綠。另提供只計國民黨與民進黨正式提名人的敏感度口徑。
+
+| 選舉 | 聯盟藍 | 聯盟綠 | 其他 |
+|---|---:|---:|---:|
+| 2002 | 64.1085% | 35.8915% | 0.0000% |
+| 2006 | 57.9560% | 41.1512% | 0.8928% |
+| 2010 | 55.6494% | 43.8106% | 0.5400% |
+| 2014 | 40.8242% | 57.1591% | 2.0167% |
+| 2018 | 40.8168% | 17.2818% | 41.9014% |
+| 2022 | 42.2932% | 31.9305% | 25.7763% |
+
+2002–2022 聯盟藍由 873,102 票（64.1085%）降至 575,590 票（42.2932%），減少 297,512 票、21.8153 個百分點。最近三屆國民黨候選人得票率為 40.8242%、40.8168%、42.2932%，較適合描述成穩定的四成多競爭盤，而不是天然過半。
+
+2014 年的 57.1591% 是柯文哲加民進黨支持者與跨陣營選民構成的「聯盟表現上限」，不是民進黨單獨基本盤。2018→2022，其他票減少 16.13 個百分點，綠方增加 14.65 個百分點，藍方只增加 1.48 個百分點；聚合結果與「第三勢力選票不是固定藍營存量」相容，但無法辨識個人流向。
+
+2026 年 TVBS 兩次獨立市話樣本也提供較近期、但仍有限的線索：5 月自述 2022 投黃珊珊者為蔣 61%、沈 32%，10 月為蔣 39%、沈 53%。這不是追蹤同一批人的 panel，子群抽樣誤差高於公布的全體誤差；10 月有投票意願樣本中只有 15%自述投黃，也低於黃珊珊 2022 實際得票率 25.1398%。因此不能把 53:39 直接套用到全部 342,141 張黃票。詳見 [TVBS 5 月原始民調](https://cc.tvbs.com.tw/portal/file/poll_center/2026/20260527/87ed4a7009e43fa1cea459b7f1785f83.pdf)、[TVBS 10 月報導](https://news.tvbs.com.tw/politics/4033530)及 [`report/findings.md`](report/findings.md)。
+
+總統與市長的分面比較見 [`charts/taipei-presidential-mayor-comparison.svg`](charts/taipei-presidential-mayor-comparison.svg)。地方候選人、投票率與選舉情境不同，兩條序列可比較但不可互換。
+
+## 總統選舉主要發現
 
 ![台北市泛藍總統票每屆增減](charts/taipei-blue-election-deltas.svg)
-
-## 主要發現
 
 | 指標 | 2000 | 2024 | 變化 |
 |---|---:|---:|---:|
@@ -88,12 +111,23 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 - `data/derived/village_age_structure_2024.csv`
 - `data/derived/age_model_2024.csv`
 - `data/derived/age_source_manifest.json`
+- `data/derived/mayor_candidate_totals.csv`
+- `data/derived/mayor_city_trend.csv`
+- `data/derived/mayor_bloc_deltas.csv`
+- `data/derived/mayor_electoral_volatility.csv`
+- `data/derived/mayor_deep_blue_cohort.csv`
+- `data/derived/mayor_deep_green_cohort.csv`
+- `data/derived/mayor_source_manifest.json`
 - `charts/taipei-blue-election-deltas.svg`
 - `charts/taipei-blue-election-deltas.html`
 - `charts/taipei-bloc-and-volatility.svg`
 - `charts/taipei-bloc-and-volatility.html`
 - `charts/village-age-model-2024.svg`
 - `charts/village-age-model-2024.html`
+- `charts/taipei-mayor-bloc-and-volatility.svg`
+- `charts/taipei-mayor-bloc-and-volatility.html`
+- `charts/taipei-presidential-mayor-comparison.svg`
+- `charts/taipei-presidential-mayor-comparison.html`
 
 ## 資料來源
 
@@ -102,6 +136,8 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 - [中選會 2024 年選舉人年齡統計](https://web.cec.gov.tw/api/file/5f9a0a37-3df1-46a7-afcb-8fff36f1d800.pdf)
 - [中選會年齡投票率研究](https://web.cec.gov.tw/api/file/c67a1f6c-544a-4065-ac96-ce53f183de5c.pdf)
 - [TVBS 2023-12-22 分齡民調](https://cc.tvbs.com.tw/portal/file/poll_center/2023/20231222/adc5c803a4f2bbc2193a44e2b74f7492.pdf)
+- [TVBS 2026-05-27 台北市長選情民調](https://cc.tvbs.com.tw/portal/file/poll_center/2026/20260527/87ed4a7009e43fa1cea459b7f1785f83.pdf)
+- [TVBS 2026-10-08 台北市長選情報導](https://news.tvbs.com.tw/politics/4033530)
 - [聯合報 2023-11-28 分齡民調](https://paper.udn.com/udnpaper/PID0001/390092/web/)
 - [戶政司：村里戶數、單一年齡人口](https://data.gov.tw/dataset/77132)：本專案使用 2023 年 12 月 `ODRP014` API；快照 URL、SHA-256 與位元組數見 age source manifest。
 
@@ -116,6 +152,9 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 - 年齡模型是使用 2024 同屆選舉估計的描述基準，不是樣本外預測或因果識別。
 - 眷村所在地代理里反映的是地理範圍，不等於眷村後代人口。
 - 精確里名配對會排除改名、分里或合併的里，換取較可解釋的固定 cohort。
+- 市長聯盟口徑是透明的分析分類；2014 年的聯盟綠票不可解讀成民進黨單獨基本盤。
+- 市長與總統選舉受候選人、職位、投票率與競選脈絡影響，不能把兩條時間序列當成同一種選舉。
+- 兩次 TVBS 民調是獨立橫斷面市話樣本；回憶投票子群不是固定追蹤樣本，公布的全體抽樣誤差也不等於子群誤差。
 
 ## License
 

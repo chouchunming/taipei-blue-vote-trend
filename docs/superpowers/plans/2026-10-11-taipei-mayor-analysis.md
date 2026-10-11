@@ -466,7 +466,7 @@ git commit -m "feat: chart Taipei mayor vote trends"
 - Consumes: verified mayor CSV values and inspected charts.
 - Produces: user-facing interpretation, completed checklist, merged `main`, and verified GitHub artifacts.
 
-- [ ] **Step 1: Extract official findings**
+- [x] **Step 1: Extract official findings**
 
 Read all mayor derived tables and record:
 
@@ -478,11 +478,11 @@ Read all mayor derived tables and record:
 - the exact 2006 and 2014 classification sensitivity differences;
 - similarities and differences between presidential and mayoral trends.
 
-- [ ] **Step 2: Update README and report**
+- [x] **Step 2: Update README and report**
 
 Document the six elections, both candidate-classification tables, why coalition is primary, why 2014 official green is zero, cohort definitions and counts, citywide findings, volatility, chart paths, CSV paths, source manifest, and interpretation limits. State explicitly that local candidate effects and turnout make presidential and mayoral results non-interchangeable.
 
-- [ ] **Step 3: Run fresh full verification**
+- [x] **Step 3: Run fresh full verification**
 
 ```bash
 caffeinate -i -m env PYTHONPATH=src python3 -m taipei_blue_vote --refresh
@@ -493,7 +493,7 @@ caffeinate -i -m git diff --check
 
 Expected: official rebuild exits zero, all tests pass, compileall exits zero, and diff check prints nothing.
 
-- [ ] **Step 4: Review requirements and commit documentation**
+- [x] **Step 4: Review requirements and commit documentation**
 
 Compare every design requirement with code, generated artifacts, charts, and prose. Confirm presidential files are unchanged except intentional comparison-chart references. Fix only in-scope gaps, rerun affected checks, then commit:
 
